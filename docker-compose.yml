@@ -8,8 +8,6 @@ services:
       - ./:/var/www
       - ./docker/app/php.ini:/usr/local/etc/php/php.ini:ro
       - ./docker/app/local.ini:/usr/local/etc/php/conf.d/local.ini:ro
-    env_file:
-      - .env
     depends_on:
       - mysql
       - redis
@@ -25,8 +23,6 @@ services:
     restart: unless-stopped
     volumes:
       - ./:/var/www
-    env_file:
-      - .env
     depends_on:
       - mysql
       - redis
@@ -40,8 +36,6 @@ services:
     restart: unless-stopped
     volumes:
       - ./:/var/www
-    env_file:
-      - .env
     depends_on:
       - mysql
       - redis

@@ -40,7 +40,7 @@ docker compose exec app php artisan horizon:terminate
 
 #### Acessar MySQL
 ```bash
-docker compose exec mysql mysql -uuser -ppassword deputados_database
+docker compose exec mysql mysql -uuser -ppassword vigia_database
 ```
 
 #### Acessar Redis

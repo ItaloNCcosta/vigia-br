@@ -1,5 +1,5 @@
 @props([
-  'names' => ['VigiaBR','Deputados gastos BR'],
+  'names' => ['VigiaBR'],
   'period' => 10000,
   'href' => url('/'),
   'class' => 'flex items-center gap-2 font-bold text-lg text-emerald-600',

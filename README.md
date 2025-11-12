@@ -1,4 +1,4 @@
-# Deputados Gastos BR 🇧🇷
+# Vigia BR 🇧🇷
 
 Aplicação **Laravel 12** que consome a [API de Dados Abertos da Câmara dos Deputados](https://dadosabertos.camara.leg.br/) para sincronizar e exibir informações de gastos dos deputados federais do Brasil.
 O objetivo é oferecer uma ferramenta simples e rápida para consulta de despesas parlamentares, com processamento assíncrono e agendamento de sincronizações automáticas.
@@ -27,8 +27,8 @@ O objetivo é oferecer uma ferramenta simples e rápida para consulta de despesa
 1. **Clone o repositório**
 
    ```bash
-   git clone https://github.com/ItaloNCcosta/deputados-gastos-br.git
-   cd deputados-gastos-br
+   git clone git@github.com:ItaloNCcosta/vigia-br.git
+   cd vigia-br
    ```
 
 2. **Copie o `.env` e ajuste variáveis**

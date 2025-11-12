@@ -65,7 +65,7 @@ services:
       dockerfile: Dockerfile
     container_name: laravel_mysql
     environment:
-      MYSQL_DATABASE: deputados_database
+      MYSQL_DATABASE: vigia_database
       MYSQL_ROOT_PASSWORD: root
       MYSQL_USER: user
       MYSQL_PASSWORD: password

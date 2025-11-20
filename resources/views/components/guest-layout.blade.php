@@ -22,6 +22,10 @@
 </head>
 
 <body class="flex flex-col min-h-screen bg-slate-50 text-slate-800 antialiased selection:bg-emerald-200/60">
+    <div class="w-full bg-yellow-500 text-black text-center py-2 text-sm font-medium">
+        Projeto em desenvolvimento — algumas funcionalidades podem não estar disponíveis.
+    </div>
+
     <x-header-layout />
 
     <main class="flex-grow">

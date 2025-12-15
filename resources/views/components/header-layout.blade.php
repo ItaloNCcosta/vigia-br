@@ -1,8 +1,8 @@
 @props([
-  'names' => ['VigiaBR'],
-  'period' => 10000,
-  'href' => url('/'),
-  'class' => 'flex items-center gap-2 font-bold text-lg text-emerald-600',
+    'names' => ['VigiaBR'],
+    'period' => 10000,
+    'href' => url('/'),
+    'class' => 'flex items-center gap-2 font-bold text-lg text-emerald-600',
 ])
 
 <header class="bg-white border-b border-slate-200/60">
@@ -17,7 +17,7 @@
         </a>
         <nav class="hidden md:flex gap-6 text-sm font-medium text-slate-600">
             <a href="{{ route('deputies.index') }}" class="hover:text-emerald-600">Buscar</a>
-            <a href="{{ route('expenses.index') }}" class="hover:text-emerald-600">Gastos</a>
+            <a href="{{-- route('expenses.index') --}}" class="hover:text-emerald-600">Gastos</a>
             <a href="{{ route('deputies.ranking') }}" class="hover:text-emerald-600">Ranking</a>
             <a href="{{ route('about') }}" class="hover:text-emerald-600">Sobre</a>
         </nav>

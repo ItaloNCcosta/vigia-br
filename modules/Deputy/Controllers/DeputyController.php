@@ -25,6 +25,9 @@ final class DeputyController extends Controller
         private readonly DeputyRankingService $rankingService
     ) {}
 
+    /**
+     * Lista todos os deputados com filtros.
+     */
     public function index(DeputyIndexRequest $request): View|JsonResponse
     {
         $filters = $request->filters();
@@ -55,10 +58,13 @@ final class DeputyController extends Controller
             'deputies' => $deputies,
             'filters' => $filters,
             'states' => $states,
-            'parties' => $parties
+            'parties' => $parties,
         ]);
     }
 
+    /**
+     * Exibe detalhes de um deputado com despesas.
+     */
     public function show(Request $request, string $id): View|JsonResponse
     {
         $deputy = $this->showService->findWithExpenseStats($id);
@@ -67,32 +73,43 @@ final class DeputyController extends Controller
             abort(404, 'Deputado não encontrado');
         }
 
+        $expenseFilters = $request->only(['year', 'month', 'expense_type', 'supplier']);
+
+        $expenseFilters['tab'] = $request->get('tab', 'perfil');
+
+        $expenses = $this->showService->getExpensesPaginated($deputy, $expenseFilters, 20);
+
+        $years = $this->showService->getAvailableYears($deputy);
+
+        $filterMonths = $this->showService->getAvailableMonths(
+            $deputy,
+            $expenseFilters['year'] ?? null
+        );
+
+        $expenseTypes = $this->showService->getAvailableExpenseTypes($deputy);
+
         $expensesByType = $this->showService->getExpensesByType($deputy);
         $expensesByMonth = $this->showService->getExpensesByMonth($deputy);
         $topSuppliers = $this->showService->getTopSuppliers($deputy);
         $rank = $this->rankingService->getRank($deputy);
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'data' => $deputy,
-                'stats' => [
-                    'rank' => $rank,
-                    'expenses_by_type' => $expensesByType,
-                    'expenses_by_month' => $expensesByMonth,
-                    'top_suppliers' => $topSuppliers,
-                ],
-            ]);
-        }
-
         return view('deputies.show', [
             'deputy' => $deputy,
+            'expenses' => $expenses,
+            'years' => $years,
+            'filterMonths' => $filterMonths,
+            'expenseTypes' => $expenseTypes,
+            'filters' => $expenseFilters,
             'expensesByType' => $expensesByType,
             'expensesByMonth' => $expensesByMonth,
             'topSuppliers' => $topSuppliers,
-            'rank' => $rank
+            'rank' => $rank,
         ]);
     }
 
+    /**
+     * Busca deputados por nome (autocomplete/search).
+     */
     public function search(DeputySearchRequest $request): JsonResponse
     {
         $query = $request->searchQuery();
@@ -113,6 +130,9 @@ final class DeputyController extends Controller
         ]);
     }
 
+    /**
+     * Ranking de maiores gastadores.
+     */
     public function ranking(Request $request): View|JsonResponse
     {
         $filters = $request->only(['state', 'party', 'year']);
@@ -149,10 +169,13 @@ final class DeputyController extends Controller
             'byParty' => $byParty,
             'filters' => $filters,
             'states' => $states,
-            'parties' => $parties
+            'parties' => $parties,
         ]);
     }
 
+    /**
+     * Deputados por estado.
+     */
     public function byState(Request $request, string $stateCode): View|JsonResponse
     {
         $stateCode = strtoupper($stateCode);
@@ -179,9 +202,16 @@ final class DeputyController extends Controller
             ]);
         }
 
-        return view('deputies.by-state', compact('state', 'deputies', 'topSpenders'));
+        return view('deputies.by-state', [
+            'state' => $state,
+            'deputies' => $deputies,
+            'topSpenders' => $topSpenders,
+        ]);
     }
 
+    /**
+     * Deputados por partido.
+     */
     public function byParty(Request $request, string $partyAcronym): View|JsonResponse
     {
         $partyAcronym = strtoupper($partyAcronym);
@@ -206,10 +236,13 @@ final class DeputyController extends Controller
         return view('deputies.by-party', [
             'partyAcronym' => $partyAcronym,
             'deputies' => $deputies,
-            'topSpenders' => $topSpenders
+            'topSpenders' => $topSpenders,
         ]);
     }
 
+    /**
+     * Comparativo entre dois deputados.
+     */
     public function compare(DeputyCompareRequest $request): View|JsonResponse
     {
         $comparison = $this->rankingService->compare(
@@ -225,10 +258,15 @@ final class DeputyController extends Controller
             return response()->json($comparison);
         }
 
-        return view('deputies.compare', ['comparison' => $comparison]);
+        return view('deputies.compare', [
+            'comparison' => $comparison,
+        ]);
     }
 
-    public function stats(Request $request): JsonResponse
+    /**
+     * Estatísticas gerais (API only).
+     */
+    public function stats(): JsonResponse
     {
         $generalStats = $this->rankingService->getGeneralStats();
         $byState = $this->rankingService->averageByState();
@@ -245,14 +283,23 @@ final class DeputyController extends Controller
         ]);
     }
 
+    /**
+     * Despesas de um deputado (página dedicada).
+     */
     public function expenses(Request $request, string $id): View|JsonResponse
     {
         $deputy = $this->showService->findOrFail($id);
 
-        $year = $request->get('year', date('Y'));
+        $filters = $request->only(['year', 'month', 'expense_type', 'supplier']);
+        $perPage = (int) $request->get('per_page', 20);
+
+        $expenses = $this->showService->getExpensesPaginated($deputy, $filters, $perPage);
+        $years = $this->showService->getAvailableYears($deputy);
+        $filterMonths = $this->showService->getAvailableMonths($deputy, $filters['year'] ?? null);
+        $expenseTypes = $this->showService->getAvailableExpenseTypes($deputy);
 
         $expensesByType = $this->showService->getExpensesByType($deputy);
-        $expensesByMonth = $this->showService->getExpensesByMonth($deputy, (int) $year);
+        $expensesByMonth = $this->showService->getExpensesByMonth($deputy, $filters['year'] ?? null);
         $topSuppliers = $this->showService->getTopSuppliers($deputy, 20);
 
         if ($request->wantsJson()) {
@@ -262,7 +309,9 @@ final class DeputyController extends Controller
                     'name' => $deputy->name,
                     'total_expenses' => $deputy->total_expenses,
                 ],
-                'year' => $year,
+                'expenses' => $expenses,
+                'years' => $years,
+                'filters' => $filters,
                 'by_type' => $expensesByType,
                 'by_month' => $expensesByMonth,
                 'top_suppliers' => $topSuppliers,
@@ -271,10 +320,14 @@ final class DeputyController extends Controller
 
         return view('deputies.expenses', [
             'deputy' => $deputy,
-            'year' => $year,
+            'expenses' => $expenses,
+            'years' => $years,
+            'filterMonths' => $filterMonths,
+            'expenseTypes' => $expenseTypes,
+            'filters' => $filters,
             'expensesByType' => $expensesByType,
             'expensesByMonth' => $expensesByMonth,
-            'topSuppliers' => $topSuppliers
+            'topSuppliers' => $topSuppliers,
         ]);
     }
 }

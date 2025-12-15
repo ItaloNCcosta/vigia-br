@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Deputy\Services;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Modules\Deputy\Adapters\CamaraDeputyAdapter;
 use Modules\Deputy\Jobs\SyncDeputyDetailsJob;
@@ -100,6 +101,63 @@ final class DeputyShowService
             ->find($id);
     }
 
+    public function getExpensesPaginated(
+        Deputy $deputy,
+        array $filters = [],
+        int $perPage = 20
+    ): LengthAwarePaginator {
+        return $deputy->expenses()
+            ->when(
+                $filters['year'] ?? null,
+                fn($q, $year) => $q->where('year', $year)
+            )
+            ->when(
+                $filters['month'] ?? null,
+                fn($q, $month) => $q->where('month', $month)
+            )
+            ->when(
+                $filters['expense_type'] ?? null,
+                fn($q, $type) => $q->where('expense_type', $type)
+            )
+            ->when(
+                $filters['supplier'] ?? null,
+                fn($q, $supplier) => $q->where('supplier_name', 'like', "%{$supplier}%")
+            )
+            ->orderByDesc('document_date')
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->paginate($perPage)
+            ->appends($filters);
+    }
+
+    public function getAvailableYears(Deputy $deputy): Collection
+    {
+        return $deputy->expenses()
+            ->select('year')
+            ->distinct()
+            ->orderByDesc('year')
+            ->pluck('year');
+    }
+
+    public function getAvailableMonths(Deputy $deputy, ?int $year = null): Collection
+    {
+        return $deputy->expenses()
+            ->select('month')
+            ->when($year, fn($q) => $q->where('year', $year))
+            ->distinct()
+            ->orderBy('month')
+            ->pluck('month');
+    }
+
+    public function getAvailableExpenseTypes(Deputy $deputy): Collection
+    {
+        return $deputy->expenses()
+            ->select('expense_type')
+            ->distinct()
+            ->orderBy('expense_type')
+            ->pluck('expense_type');
+    }
+
     public function getExpensesByType(Deputy $deputy): Collection
     {
         return $deputy->expenses()
@@ -117,7 +175,7 @@ final class DeputyShowService
             ->select('year', 'month')
             ->selectRaw('COUNT(*) as count')
             ->selectRaw('SUM(net_value) as total')
-            ->when($year, fn ($q) => $q->where('year', $year))
+            ->when($year, fn($q) => $q->where('year', $year))
             ->groupBy('year', 'month')
             ->orderBy('year')
             ->orderBy('month')
@@ -135,5 +193,28 @@ final class DeputyShowService
             ->orderByDesc('total')
             ->limit($limit)
             ->get();
+    }
+
+    public function getFinancialSummary(Deputy $deputy): array
+    {
+        $total = $deputy->expenses()->sum('net_value');
+
+        $monthsCount = $deputy->expenses()
+            ->selectRaw('DISTINCT CONCAT(year, "-", LPAD(month, 2, "0")) as period')
+            ->count();
+
+        $monthsCount = max($monthsCount, 1);
+
+        $lastExpense = $deputy->expenses()
+            ->orderByDesc('document_date')
+            ->first();
+
+        return [
+            'total' => (float) $total,
+            'average_monthly' => $total / $monthsCount,
+            'months_count' => $monthsCount,
+            'last_expense_date' => $lastExpense?->document_date,
+            'expenses_count' => $deputy->expenses()->count(),
+        ];
     }
 }

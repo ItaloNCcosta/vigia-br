@@ -24,7 +24,7 @@ final class CamaraApiClient
     {
         $this->http = Http::acceptJson()
             ->baseUrl($this->getBaseUrl())
-            ->timeout(config('services.camara.timeout', self::DEFAULT_TIMEOUT))
+            ->timeout((int) config('services.camara.timeout', self::DEFAULT_TIMEOUT))
             ->retry(
                 self::DEFAULT_RETRIES,
                 self::DEFAULT_RETRY_DELAY,
@@ -58,7 +58,7 @@ final class CamaraApiClient
         return Cache::remember(
             $key,
             now()->addMinutes($ttlMinutes),
-            fn () => $this->get($endpoint, $params)
+            fn() => $this->get($endpoint, $params)
         );
     }
 

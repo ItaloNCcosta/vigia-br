@@ -55,10 +55,10 @@
                     <select name="state"
                         class="w-full rounded-lg border-slate-300 text-sm focus:ring-emerald-500 focus:border-emerald-500">
                         <option value="">Todos</option>
-                        @foreach ($state as $item)
+                        {{-- @foreach ($states as $item)
                             <option value="{{ $item->value }}" @selected(request('state') === $item->value)>{{ $item->value }}
                             </option>
-                        @endforeach
+                        @endforeach --}}
                     </select>
                 </div>
 
@@ -69,10 +69,10 @@
                     <select name="party"
                         class="w-full rounded-lg border-slate-300 text-sm focus:ring-emerald-500 focus:border-emerald-500">
                         <option value="">Todos</option>
-                        @foreach ($party as $item)
+                        {{-- @foreach ($party as $item)
                             <option value="{{ $item->value }}" @selected(request('party') === $item->value)>{{ $item->value }}
                             </option>
-                        @endforeach
+                        @endforeach --}}
                     </select>
                 </div>
 

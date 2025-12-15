@@ -20,12 +20,6 @@ final class DeputySyncService
         private readonly CamaraDeputyAdapter $adapter
     ) {}
 
-    /**
-     * Sincroniza todos os deputados da legislatura atual.
-     *
-     * @param callable|null $onProgress Callback para progresso (recebe: current, total, deputy)
-     * @return array<string, int>
-     */
     public function syncAll(?callable $onProgress = null): array
     {
         $this->resetCounters();
@@ -53,9 +47,6 @@ final class DeputySyncService
         return $this->getStats();
     }
 
-    /**
-     * Sincroniza detalhes completos de um deputado.
-     */
     public function syncDetails(int $externalId): ?Deputy
     {
         $data = $this->adapter->find($externalId);
@@ -68,12 +59,6 @@ final class DeputySyncService
         return $this->syncFromDetailData($externalId, $data);
     }
 
-    /**
-     * Sincroniza múltiplos deputados por IDs externos.
-     *
-     * @param array<int> $externalIds
-     * @return array<string, int>
-     */
     public function syncMany(array $externalIds): array
     {
         $this->resetCounters();
@@ -93,13 +78,6 @@ final class DeputySyncService
         return $this->getStats();
     }
 
-    /**
-     * Sincroniza deputados desatualizados.
-     *
-     * @param int $staleMinutes
-     * @param int $limit
-     * @return array<string, int>
-     */
     public function syncStale(int $staleMinutes = 60, int $limit = 100): array
     {
         $this->resetCounters();
@@ -112,11 +90,6 @@ final class DeputySyncService
         return $this->syncMany($staleDeputies);
     }
 
-    /**
-     * Sincroniza a partir de dados da listagem (básico).
-     *
-     * @param array<string, mixed> $data
-     */
     private function syncFromListData(array $data): Deputy
     {
         $externalId = (int) $data['id'];
@@ -138,12 +111,6 @@ final class DeputySyncService
         return $deputy;
     }
 
-    /**
-     * Sincroniza a partir de dados detalhados.
-     *
-     * @param int $externalId
-     * @param array<string, mixed> $data
-     */
     private function syncFromDetailData(int $externalId, array $data): Deputy
     {
         $exists = Deputy::existsByExternalId($externalId);
@@ -155,11 +122,6 @@ final class DeputySyncService
         return $deputy;
     }
 
-    /**
-     * Remove deputados que não estão mais na API.
-     *
-     * @return int Número de removidos
-     */
     public function removeStale(): int
     {
         $apiExternalIds = [];
@@ -175,32 +137,16 @@ final class DeputySyncService
         return $removed;
     }
 
-    /**
-     * Sincronização completa com remoção de antigos.
-     *
-     * @param callable|null $onProgress
-     * @return array<string, int>
-     */
     public function fullSync(?callable $onProgress = null): array
     {
-        DB::beginTransaction();
-
-        try {
+        return DB::transaction(function ($onProgress) {
             $stats = $this->syncAll($onProgress);
             $stats['removed'] = $this->removeStale();
 
-            DB::commit();
-
             return $stats;
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
-    /**
-     * Reseta contadores.
-     */
     private function resetCounters(): void
     {
         $this->created = 0;
@@ -208,11 +154,6 @@ final class DeputySyncService
         $this->failed = 0;
     }
 
-    /**
-     * Retorna estatísticas.
-     *
-     * @return array<string, int>
-     */
     public function getStats(): array
     {
         return [

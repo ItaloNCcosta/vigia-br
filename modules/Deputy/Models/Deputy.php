@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Modules\Expense\Models\Expense;
 use Modules\Legislature\Models\Legislature;
 use Modules\Party\Models\Party;
@@ -18,39 +19,6 @@ use Modules\Shared\Enums\StateEnum;
 use Modules\Shared\Traits\HasExternalId;
 use Modules\Shared\Traits\HasSyncStatus;
 
-/**
- * @property string $id
- * @property int $external_id
- * @property string|null $legislature_id
- * @property string|null $party_id
- * @property string $name
- * @property string|null $civil_name
- * @property string|null $electoral_name
- * @property string|null $cpf
- * @property GenderEnum|null $gender
- * @property \Carbon\Carbon|null $birth_date
- * @property string|null $birth_city
- * @property string|null $birth_state
- * @property \Carbon\Carbon|null $death_date
- * @property string|null $education_level
- * @property string $state_code
- * @property string $party_acronym
- * @property string|null $status
- * @property string|null $email
- * @property string|null $photo_url
- * @property string|null $website_url
- * @property array|null $social_links
- * @property string|null $uri
- * @property array|null $office
- * @property string $total_expenses
- * @property \Carbon\Carbon|null $last_synced_at
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- *
- * @property-read Legislature|null $legislature
- * @property-read Party|null $party
- * @property-read \Illuminate\Database\Eloquent\Collection<Expense> $expenses
- */
 final class Deputy extends Model
 {
     use HasUuids;
@@ -102,10 +70,6 @@ final class Deputy extends Model
         'total_expenses' => '0.00',
     ];
 
-    /* ========================================
-     * Relationships
-     * ======================================== */
-
     public function legislature(): BelongsTo
     {
         return $this->belongsTo(Legislature::class);
@@ -121,13 +85,6 @@ final class Deputy extends Model
         return $this->hasMany(Expense::class);
     }
 
-    /* ========================================
-     * Scopes
-     * ======================================== */
-
-    /**
-     * Filtra por estado.
-     */
     public function scopeByState(Builder $query, string|StateEnum $state): Builder
     {
         $code = $state instanceof StateEnum ? $state->value : $state;
@@ -135,85 +92,51 @@ final class Deputy extends Model
         return $query->where('state_code', $code);
     }
 
-    /**
-     * Filtra por partido.
-     */
     public function scopeByParty(Builder $query, string $acronym): Builder
     {
         return $query->where('party_acronym', $acronym);
     }
 
-    /**
-     * Filtra por nome (busca parcial).
-     */
     public function scopeByName(Builder $query, string $name): Builder
     {
         return $query->where('name', 'like', "%{$name}%");
     }
 
-    /**
-     * Apenas deputados em exercício.
-     */
     public function scopeInExercise(Builder $query): Builder
     {
         return $query->where('status', 'Exercício');
     }
 
-    /**
-     * Apenas deputados ativos (não falecidos).
-     */
     public function scopeAlive(Builder $query): Builder
     {
         return $query->whereNull('death_date');
     }
 
-    /**
-     * Ordenado por total de despesas (maiores primeiro).
-     */
     public function scopeTopSpenders(Builder $query): Builder
     {
         return $query->orderByDesc('total_expenses');
     }
 
-    /**
-     * Com soma de despesas calculada.
-     */
     public function scopeWithExpensesSum(Builder $query): Builder
     {
         return $query->withSum('expenses', 'net_value');
     }
 
-    /* ========================================
-     * Accessors & Mutators
-     * ======================================== */
-
-    /**
-     * Retorna o nome formatado para exibição.
-     */
     public function getDisplayNameAttribute(): string
     {
         return $this->electoral_name ?? $this->name;
     }
 
-    /**
-     * Retorna estado como Enum.
-     */
     public function getStateEnumAttribute(): ?StateEnum
     {
         return StateEnum::tryFrom($this->state_code);
     }
 
-    /**
-     * Retorna o nome completo do estado.
-     */
     public function getStateNameAttribute(): ?string
     {
         return $this->state_enum?->name();
     }
 
-    /**
-     * Retorna a idade do deputado.
-     */
     public function getAgeAttribute(): ?int
     {
         if (!$this->birth_date) {
@@ -225,25 +148,16 @@ final class Deputy extends Model
         return $this->birth_date->diffInYears($endDate);
     }
 
-    /**
-     * Retorna o telefone do gabinete formatado.
-     */
     public function getOfficePhoneAttribute(): ?string
     {
         return $this->office['telefone'] ?? null;
     }
 
-    /**
-     * Retorna o email do gabinete.
-     */
     public function getOfficeEmailAttribute(): ?string
     {
         return $this->office['email'] ?? $this->email;
     }
 
-    /**
-     * Retorna a localização completa do gabinete.
-     */
     public function getOfficeLocationAttribute(): ?string
     {
         if (!$this->office) {
@@ -259,13 +173,6 @@ final class Deputy extends Model
         return implode(', ', $parts) ?: null;
     }
 
-    /* ========================================
-     * Business Methods
-     * ======================================== */
-
-    /**
-     * Atualiza o total de despesas do deputado.
-     */
     public function updateTotalExpenses(): void
     {
         $total = $this->expenses()->sum('net_value');
@@ -273,9 +180,6 @@ final class Deputy extends Model
         $this->update(['total_expenses' => $total]);
     }
 
-    /**
-     * Recalcula e atualiza total de despesas.
-     */
     public function recalculateTotalExpenses(): string
     {
         $this->updateTotalExpenses();
@@ -283,33 +187,21 @@ final class Deputy extends Model
         return $this->fresh()->total_expenses;
     }
 
-    /**
-     * Verifica se o deputado está em exercício.
-     */
     public function isInExercise(): bool
     {
         return $this->status === 'Exercício';
     }
 
-    /**
-     * Verifica se o deputado faleceu.
-     */
     public function isDeceased(): bool
     {
         return $this->death_date !== null;
     }
 
-    /**
-     * Retorna as redes sociais como collection.
-     */
-    public function getSocialLinksCollection(): \Illuminate\Support\Collection
+    public function getSocialLinksCollection(): Collection
     {
         return collect($this->social_links ?? []);
     }
 
-    /**
-     * Retorna link de uma rede social específica.
-     */
     public function getSocialLink(string $network): ?string
     {
         $network = strtolower($network);
@@ -318,11 +210,6 @@ final class Deputy extends Model
             ->first(fn ($link) => str_contains(strtolower($link), $network));
     }
 
-    /**
-     * Cria ou atualiza deputado a partir dos dados da API.
-     *
-     * @param array<string, mixed> $apiData
-     */
     public static function upsertFromApi(int $externalId, array $apiData): static
     {
         return static::upsertByExternalId($externalId, [

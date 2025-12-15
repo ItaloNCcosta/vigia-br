@@ -10,13 +10,6 @@ use Modules\Deputy\Models\Deputy;
 
 final class DeputyRankingService
 {
-    /**
-     * Ranking de maiores gastadores.
-     *
-     * @param array<string, mixed> $filters
-     * @param int $limit
-     * @return Collection<int, Deputy>
-     */
     public function topSpenders(array $filters = [], int $limit = 10): Collection
     {
         return $this->buildRankingQuery($filters)
@@ -25,13 +18,6 @@ final class DeputyRankingService
             ->get();
     }
 
-    /**
-     * Ranking de menores gastadores.
-     *
-     * @param array<string, mixed> $filters
-     * @param int $limit
-     * @return Collection<int, Deputy>
-     */
     public function lowestSpenders(array $filters = [], int $limit = 10): Collection
     {
         return $this->buildRankingQuery($filters)
@@ -41,35 +27,16 @@ final class DeputyRankingService
             ->get();
     }
 
-    /**
-     * Ranking por estado.
-     *
-     * @param string $stateCode
-     * @param int $limit
-     * @return Collection<int, Deputy>
-     */
     public function topSpendersByState(string $stateCode, int $limit = 10): Collection
     {
         return $this->topSpenders(['state' => $stateCode], $limit);
     }
 
-    /**
-     * Ranking por partido.
-     *
-     * @param string $partyAcronym
-     * @param int $limit
-     * @return Collection<int, Deputy>
-     */
     public function topSpendersByParty(string $partyAcronym, int $limit = 10): Collection
     {
         return $this->topSpenders(['party' => $partyAcronym], $limit);
     }
 
-    /**
-     * Média de gastos por estado.
-     *
-     * @return Collection<int, object>
-     */
     public function averageByState(): Collection
     {
         return Deputy::query()
@@ -84,11 +51,6 @@ final class DeputyRankingService
             ->get();
     }
 
-    /**
-     * Média de gastos por partido.
-     *
-     * @return Collection<int, object>
-     */
     public function averageByParty(): Collection
     {
         return Deputy::query()
@@ -103,11 +65,6 @@ final class DeputyRankingService
             ->get();
     }
 
-    /**
-     * Estatísticas gerais.
-     *
-     * @return array<string, mixed>
-     */
     public function getGeneralStats(): array
     {
         $stats = Deputy::query()
@@ -127,12 +84,6 @@ final class DeputyRankingService
         ];
     }
 
-    /**
-     * Ranking com percentil.
-     *
-     * @param int $limit
-     * @return Collection<int, Deputy>
-     */
     public function topSpendersWithPercentile(int $limit = 10): Collection
     {
         $maxExpense = Deputy::max('total_expenses') ?: 1;
@@ -145,11 +96,6 @@ final class DeputyRankingService
             ->get();
     }
 
-    /**
-     * Deputados acima da média.
-     *
-     * @return Collection<int, Deputy>
-     */
     public function aboveAverage(): Collection
     {
         $average = Deputy::avg('total_expenses') ?: 0;
@@ -161,11 +107,6 @@ final class DeputyRankingService
             ->get();
     }
 
-    /**
-     * Deputados abaixo da média.
-     *
-     * @return Collection<int, Deputy>
-     */
     public function belowAverage(): Collection
     {
         $average = Deputy::avg('total_expenses') ?: 0;
@@ -178,13 +119,6 @@ final class DeputyRankingService
             ->get();
     }
 
-    /**
-     * Comparativo entre dois deputados.
-     *
-     * @param string $deputyId1
-     * @param string $deputyId2
-     * @return array<string, mixed>|null
-     */
     public function compare(string $deputyId1, string $deputyId2): ?array
     {
         $deputy1 = Deputy::with(['party'])->find($deputyId1);
@@ -212,42 +146,33 @@ final class DeputyRankingService
         ];
     }
 
-    /**
-     * Retorna a posição do deputado no ranking geral.
-     */
     public function getRank(Deputy $deputy): int
     {
         return Deputy::where('total_expenses', '>', $deputy->total_expenses)->count() + 1;
     }
 
-    /**
-     * Constrói a query base para rankings.
-     *
-     * @param array<string, mixed> $filters
-     * @return Builder
-     */
     private function buildRankingQuery(array $filters): Builder
     {
         return Deputy::query()
             ->with(['party'])
             ->when(
                 $filters['state'] ?? null,
-                fn (Builder $q, string $state) => $q->byState($state)
+                fn(Builder $q, string $state) => $q->byState($state)
             )
             ->when(
                 $filters['party'] ?? null,
-                fn (Builder $q, string $party) => $q->byParty($party)
+                fn(Builder $q, string $party) => $q->byParty($party)
             )
             ->when(
                 $filters['year'] ?? null,
-                fn (Builder $q, int $year) => $q->whereHas(
+                fn(Builder $q, int $year) => $q->whereHas(
                     'expenses',
-                    fn ($eq) => $eq->where('year', $year)
+                    fn($eq) => $eq->where('year', $year)
                 )
             )
             ->when(
                 ($filters['in_exercise'] ?? true) === true,
-                fn (Builder $q) => $q->inExercise()
+                fn(Builder $q) => $q->inExercise()
             );
     }
 }

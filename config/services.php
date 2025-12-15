@@ -35,10 +35,8 @@ return [
         ],
     ],
 
-    'deputies' => [
-        'url' => env('DEPUTADOS_API_URL', 'https://dadosabertos.camara.leg.br/api/v2/'),
-        'timeout' => 10,
-        'connect_timeout' => 5,
+    'camara' => [
+        'url' => env('CAMARA_API_URL', 'https://dadosabertos.camara.leg.br/api/v2/'),
+        'timeout' => env('CAMARA_API_TIMEOUT', 30),
     ],
-
 ];

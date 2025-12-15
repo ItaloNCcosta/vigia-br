@@ -34,9 +34,6 @@ enum StateEnum: string
     case SE = 'SE';
     case TO = 'TO';
 
-    /**
-     * Retorna o nome completo do estado.
-     */
     public function name(): string
     {
         return match ($this) {
@@ -70,9 +67,6 @@ enum StateEnum: string
         };
     }
 
-    /**
-     * Retorna a região do estado.
-     */
     public function region(): string
     {
         return match ($this) {
@@ -84,9 +78,6 @@ enum StateEnum: string
         };
     }
 
-    /**
-     * Retorna o número de deputados federais do estado.
-     */
     public function deputySeats(): int
     {
         return match ($this) {
@@ -120,9 +111,6 @@ enum StateEnum: string
         };
     }
 
-    /**
-     * Cria a partir do valor da API da Câmara.
-     */
     public static function fromApi(?string $value): ?self
     {
         if ($value === null || $value === '') {
@@ -132,11 +120,6 @@ enum StateEnum: string
         return self::tryFrom(strtoupper($value));
     }
 
-    /**
-     * Retorna todos os estados como array para selects.
-     *
-     * @return array<string, string>
-     */
     public static function toSelectArray(): array
     {
         $states = [];
@@ -150,11 +133,6 @@ enum StateEnum: string
         return $states;
     }
 
-    /**
-     * Retorna estados agrupados por região.
-     *
-     * @return array<string, array<string, string>>
-     */
     public static function groupedByRegion(): array
     {
         $grouped = [];
@@ -164,7 +142,6 @@ enum StateEnum: string
             $grouped[$region][$state->value] = $state->name();
         }
 
-        // Ordena regiões e estados
         ksort($grouped);
         foreach ($grouped as &$states) {
             asort($states);
@@ -173,17 +150,11 @@ enum StateEnum: string
         return $grouped;
     }
 
-    /**
-     * Retorna estados de uma região específica.
-     *
-     * @param string $region
-     * @return array<self>
-     */
     public static function byRegion(string $region): array
     {
         return array_filter(
             self::cases(),
-            fn (self $state) => $state->region() === $region
+            fn(self $state) => $state->region() === $region
         );
     }
 }

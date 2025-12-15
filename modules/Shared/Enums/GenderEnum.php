@@ -9,9 +9,6 @@ enum GenderEnum: string
     case MALE = 'M';
     case FEMALE = 'F';
 
-    /**
-     * Retorna o label em português.
-     */
     public function label(): string
     {
         return match ($this) {
@@ -20,9 +17,6 @@ enum GenderEnum: string
         };
     }
 
-    /**
-     * Retorna o ícone (emoji).
-     */
     public function icon(): string
     {
         return match ($this) {
@@ -31,9 +25,6 @@ enum GenderEnum: string
         };
     }
 
-    /**
-     * Cria a partir do valor da API da Câmara.
-     */
     public static function fromApi(?string $value): ?self
     {
         if ($value === null) {
@@ -47,11 +38,6 @@ enum GenderEnum: string
         };
     }
 
-    /**
-     * Retorna todos os valores como array para selects.
-     *
-     * @return array<string, string>
-     */
     public static function toSelectArray(): array
     {
         return [

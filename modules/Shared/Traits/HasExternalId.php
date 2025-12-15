@@ -6,19 +6,8 @@ namespace Modules\Shared\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
 
-/**
- * Trait para models que possuem ID externo da API.
- *
- * @method static Builder|static query()
- * @method static static create(array $attributes = [])
- * @method static static updateOrCreate(array $attributes, array $values = [])
- * @method static static firstOrCreate(array $attributes, array $values = [])
- */
 trait HasExternalId
 {
-    /**
-     * Busca por ID externo da API.
-     */
     public static function findByExternalId(int|string $externalId): ?static
     {
         return static::query()
@@ -26,11 +15,6 @@ trait HasExternalId
             ->first();
     }
 
-    /**
-     * Busca por ID externo ou falha.
-     *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
-     */
     public static function findByExternalIdOrFail(int|string $externalId): static
     {
         return static::query()
@@ -38,13 +22,6 @@ trait HasExternalId
             ->firstOrFail();
     }
 
-    /**
-     * Busca ou cria por ID externo.
-     *
-     * @param int|string $externalId
-     * @param array<string, mixed> $attributes
-     * @return static
-     */
     public static function findOrCreateByExternalId(int|string $externalId, array $attributes = []): static
     {
         return static::firstOrCreate(
@@ -53,13 +30,6 @@ trait HasExternalId
         );
     }
 
-    /**
-     * Atualiza ou cria por ID externo.
-     *
-     * @param int|string $externalId
-     * @param array<string, mixed> $attributes
-     * @return static
-     */
     public static function upsertByExternalId(int|string $externalId, array $attributes): static
     {
         return static::updateOrCreate(
@@ -68,9 +38,6 @@ trait HasExternalId
         );
     }
 
-    /**
-     * Verifica se existe por ID externo.
-     */
     public static function existsByExternalId(int|string $externalId): bool
     {
         return static::query()
@@ -78,25 +45,11 @@ trait HasExternalId
             ->exists();
     }
 
-    /**
-     * Scope para filtrar por IDs externos.
-     *
-     * @param Builder $query
-     * @param array<int|string> $externalIds
-     * @return Builder
-     */
     public function scopeWhereExternalIdIn(Builder $query, array $externalIds): Builder
     {
         return $query->whereIn('external_id', $externalIds);
     }
 
-    /**
-     * Scope para filtrar por ID externo.
-     *
-     * @param Builder $query
-     * @param int|string $externalId
-     * @return Builder
-     */
     public function scopeWhereExternalId(Builder $query, int|string $externalId): Builder
     {
         return $query->where('external_id', $externalId);

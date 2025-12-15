@@ -25,9 +25,6 @@ enum ExpenseTypeEnum: string
     case SUBSCRIPTIONS = 'ASSINATURA DE PUBLICAÇÕES';
     case COURSES = 'PARTICIPAÇÃO EM CURSO, PALESTRA, SEMINÁRIO, SIMPÓSIO, CONGRESSO OU EVENTO';
 
-    /**
-     * Retorna o label simplificado.
-     */
     public function label(): string
     {
         return match ($this) {
@@ -51,9 +48,6 @@ enum ExpenseTypeEnum: string
         };
     }
 
-    /**
-     * Retorna o ícone (emoji).
-     */
     public function icon(): string
     {
         return match ($this) {
@@ -77,9 +71,6 @@ enum ExpenseTypeEnum: string
         };
     }
 
-    /**
-     * Retorna a categoria agrupada.
-     */
     public function category(): string
     {
         return match ($this) {
@@ -97,25 +88,19 @@ enum ExpenseTypeEnum: string
         };
     }
 
-    /**
-     * Cria a partir do valor da API da Câmara.
-     */
     public static function fromApi(?string $value): ?self
     {
         if ($value === null || $value === '') {
             return null;
         }
 
-        // Normaliza o texto (remove acentos extras, espaços, etc.)
         $normalized = mb_strtoupper(trim($value));
 
-        // Tenta match direto primeiro
         $case = self::tryFrom($normalized);
         if ($case !== null) {
             return $case;
         }
 
-        // Tenta match parcial para variações
         foreach (self::cases() as $case) {
             if (str_contains($normalized, mb_strtoupper(substr($case->value, 0, 30)))) {
                 return $case;
@@ -125,11 +110,6 @@ enum ExpenseTypeEnum: string
         return null;
     }
 
-    /**
-     * Retorna todos os tipos como array para selects.
-     *
-     * @return array<string, string>
-     */
     public static function toSelectArray(): array
     {
         $types = [];
@@ -143,11 +123,6 @@ enum ExpenseTypeEnum: string
         return $types;
     }
 
-    /**
-     * Retorna tipos agrupados por categoria.
-     *
-     * @return array<string, array<string, string>>
-     */
     public static function groupedByCategory(): array
     {
         $grouped = [];

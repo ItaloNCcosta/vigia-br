@@ -24,27 +24,15 @@ final class SyncAllDeputiesJob implements ShouldQueue
     use SerializesModels;
     use Batchable;
 
-    /**
-     * Número de tentativas.
-     */
     public int $tries = 3;
 
-    /**
-     * Timeout em segundos.
-     */
     public int $timeout = 300;
 
-    /**
-     * Se deve sincronizar detalhes completos.
-     */
     public function __construct(
         private readonly bool $syncDetails = false,
         private readonly bool $dispatchExpensesSync = false
     ) {}
 
-    /**
-     * Execute the job.
-     */
     public function handle(CamaraDeputyAdapter $adapter): void
     {
         if ($this->batch()?->cancelled()) {
@@ -64,7 +52,6 @@ final class SyncAllDeputiesJob implements ShouldQueue
             $externalId = (int) $data['id'];
             $exists = Deputy::existsByExternalId($externalId);
 
-            // Cria/atualiza com dados básicos
             Deputy::upsertByExternalId($externalId, [
                 'name' => $data['nome'] ?? '',
                 'electoral_name' => $data['nome'] ?? null,
@@ -78,7 +65,6 @@ final class SyncAllDeputiesJob implements ShouldQueue
 
             $exists ? $updated++ : $created++;
 
-            // Agenda jobs de detalhes/despesas
             if ($this->syncDetails || $this->dispatchExpensesSync) {
                 $deputyJobs[] = new SyncDeputyDetailsJob(
                     $externalId,
@@ -87,7 +73,6 @@ final class SyncAllDeputiesJob implements ShouldQueue
             }
         }
 
-        // Dispatch batch de jobs de detalhes
         if (!empty($deputyJobs)) {
             Bus::batch($deputyJobs)
                 ->name('sync-deputies-details')
@@ -102,9 +87,6 @@ final class SyncAllDeputiesJob implements ShouldQueue
         ]);
     }
 
-    /**
-     * Handle job failure.
-     */
     public function failed(\Throwable $exception): void
     {
         Log::error('SyncAllDeputiesJob failed', [
@@ -113,11 +95,6 @@ final class SyncAllDeputiesJob implements ShouldQueue
         ]);
     }
 
-    /**
-     * Tags para monitoramento.
-     *
-     * @return array<string>
-     */
     public function tags(): array
     {
         return ['sync', 'deputies', 'camara-api'];

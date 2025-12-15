@@ -6,9 +6,6 @@ namespace Modules\Deputy\DTOs;
 
 use Modules\Shared\Enums\GenderEnum;
 
-/**
- * Data Transfer Object para dados de Deputado.
- */
 final readonly class DeputyData
 {
     public function __construct(
@@ -34,11 +31,6 @@ final readonly class DeputyData
         public ?array $office,
     ) {}
 
-    /**
-     * Cria a partir dos dados da API da Câmara.
-     *
-     * @param array<string, mixed> $data
-     */
     public static function fromApi(array $data): self
     {
         $ultimoStatus = $data['ultimoStatus'] ?? [];
@@ -68,11 +60,6 @@ final readonly class DeputyData
         );
     }
 
-    /**
-     * Cria a partir de dados simplificados da listagem.
-     *
-     * @param array<string, mixed> $data
-     */
     public static function fromListApi(array $data): self
     {
         return new self(
@@ -99,11 +86,6 @@ final readonly class DeputyData
         );
     }
 
-    /**
-     * Converte para array para persistência.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(): array
     {
         return [
@@ -130,9 +112,6 @@ final readonly class DeputyData
         ];
     }
 
-    /**
-     * Verifica se tem dados completos (veio do endpoint de detalhes).
-     */
     public function isComplete(): bool
     {
         return $this->civilName !== null || $this->birthDate !== null;

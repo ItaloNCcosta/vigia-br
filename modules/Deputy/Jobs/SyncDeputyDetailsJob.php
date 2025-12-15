@@ -23,21 +23,10 @@ final class SyncDeputyDetailsJob implements ShouldQueue
     use SerializesModels;
     use Batchable;
 
-    /**
-     * Número de tentativas.
-     */
     public int $tries = 3;
 
-    /**
-     * Timeout em segundos.
-     */
     public int $timeout = 120;
 
-    /**
-     * Backoff entre tentativas (segundos).
-     *
-     * @var array<int>
-     */
     public array $backoff = [10, 30, 60];
 
     public function __construct(
@@ -46,9 +35,6 @@ final class SyncDeputyDetailsJob implements ShouldQueue
         private readonly ?int $expensesYear = null
     ) {}
 
-    /**
-     * Execute the job.
-     */
     public function handle(CamaraDeputyAdapter $adapter): void
     {
         if ($this->batch()?->cancelled()) {
@@ -68,7 +54,6 @@ final class SyncDeputyDetailsJob implements ShouldQueue
             return;
         }
 
-        // Atualiza com dados completos
         $deputy = Deputy::upsertFromApi($this->externalId, $data);
 
         Log::info('Deputy details synced', [
@@ -76,18 +61,13 @@ final class SyncDeputyDetailsJob implements ShouldQueue
             'name' => $deputy->name,
         ]);
 
-        // Dispara sync de despesas se solicitado
         if ($this->dispatchExpensesSync) {
             $this->dispatchExpensesJob($deputy);
         }
     }
 
-    /**
-     * Dispara job de sincronização de despesas.
-     */
     private function dispatchExpensesJob(Deputy $deputy): void
     {
-        // Se não especificou ano, usa ano atual e anterior
         if ($this->expensesYear === null) {
             $currentYear = (int) date('Y');
 
@@ -103,9 +83,6 @@ final class SyncDeputyDetailsJob implements ShouldQueue
         ]);
     }
 
-    /**
-     * Handle job failure.
-     */
     public function failed(\Throwable $exception): void
     {
         Log::error('SyncDeputyDetailsJob failed', [
@@ -114,19 +91,11 @@ final class SyncDeputyDetailsJob implements ShouldQueue
         ]);
     }
 
-    /**
-     * Determine unique ID for this job.
-     */
     public function uniqueId(): string
     {
         return 'sync-deputy-details-' . $this->externalId;
     }
 
-    /**
-     * Tags para monitoramento.
-     *
-     * @return array<string>
-     */
     public function tags(): array
     {
         return ['sync', 'deputy-details', "external:{$this->externalId}"];

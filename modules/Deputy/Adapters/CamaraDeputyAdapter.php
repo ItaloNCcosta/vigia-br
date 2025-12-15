@@ -42,7 +42,7 @@ final class CamaraDeputyAdapter implements ApiAdapterInterface
 
     public function paginate(array $filters = []): Generator
     {
-        yield from $this->client->paginate(self::ENDPOINT, $this->normalizeFilters($filters));
+        return $this->client->paginate(self::ENDPOINT, $this->normalizeFilters($filters));
     }
 
     public function paginateAsDto(array $filters = []): Generator
@@ -54,7 +54,7 @@ final class CamaraDeputyAdapter implements ApiAdapterInterface
 
     public function listCurrentDeputies(): Generator
     {
-        yield from $this->paginate([
+        return $this->paginate([
             'idLegislatura' => $this->getCurrentLegislatureId(),
             'ordem' => 'ASC',
             'ordenarPor' => 'nome',
@@ -63,7 +63,7 @@ final class CamaraDeputyAdapter implements ApiAdapterInterface
 
     public function listExpenses(int $deputyId, array $filters = []): Generator
     {
-        yield from $this->client->paginate(
+        return $this->client->paginate(
             self::ENDPOINT . "/{$deputyId}/despesas",
             $this->normalizeExpenseFilters($filters)
         );
@@ -71,12 +71,12 @@ final class CamaraDeputyAdapter implements ApiAdapterInterface
 
     public function listExpensesByYear(int $deputyId, int $year): Generator
     {
-        yield from $this->listExpenses($deputyId, ['ano' => $year]);
+        return $this->listExpenses($deputyId, ['ano' => $year]);
     }
 
     public function listExpensesByMonth(int $deputyId, int $year, int $month): Generator
     {
-        yield from $this->listExpenses($deputyId, [
+        return $this->listExpenses($deputyId, [
             'ano' => $year,
             'mes' => $month,
         ]);

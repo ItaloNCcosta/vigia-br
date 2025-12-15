@@ -8,19 +8,11 @@ use Illuminate\Foundation\Http\FormRequest;
 
 final class DeputySearchRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, mixed>
-     */
     public function rules(): array
     {
         return [
@@ -29,11 +21,6 @@ final class DeputySearchRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom messages for validator errors.
-     *
-     * @return array<string, string>
-     */
     public function messages(): array
     {
         return [
@@ -44,17 +31,11 @@ final class DeputySearchRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get the search query.
-     */
     public function searchQuery(): string
     {
         return $this->validated('q');
     }
 
-    /**
-     * Get the limit.
-     */
     public function limit(): int
     {
         return (int) $this->validated('limit', 10);

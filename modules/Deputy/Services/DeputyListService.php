@@ -11,13 +11,6 @@ use Modules\Deputy\Models\Deputy;
 
 final class DeputyListService
 {
-    /**
-     * Lista deputados com filtros e paginação.
-     *
-     * @param array<string, mixed> $filters
-     * @param int $perPage
-     * @return LengthAwarePaginator
-     */
     public function list(array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
         return Deputy::query()
@@ -47,37 +40,16 @@ final class DeputyListService
             ->appends($filters);
     }
 
-    /**
-     * Lista deputados por estado.
-     *
-     * @param string $stateCode
-     * @param int $perPage
-     * @return LengthAwarePaginator
-     */
     public function listByState(string $stateCode, int $perPage = 20): LengthAwarePaginator
     {
         return $this->list(['state' => $stateCode], $perPage);
     }
 
-    /**
-     * Lista deputados por partido.
-     *
-     * @param string $partyAcronym
-     * @param int $perPage
-     * @return LengthAwarePaginator
-     */
     public function listByParty(string $partyAcronym, int $perPage = 20): LengthAwarePaginator
     {
         return $this->list(['party' => $partyAcronym], $perPage);
     }
 
-    /**
-     * Busca deputados por nome.
-     *
-     * @param string $name
-     * @param int $limit
-     * @return Collection<int, Deputy>
-     */
     public function search(string $name, int $limit = 10): Collection
     {
         return Deputy::query()
@@ -88,11 +60,6 @@ final class DeputyListService
             ->get();
     }
 
-    /**
-     * Retorna todos os estados com deputados.
-     *
-     * @return Collection<int, object>
-     */
     public function getStatesWithDeputies(): Collection
     {
         return Deputy::query()
@@ -103,11 +70,6 @@ final class DeputyListService
             ->get();
     }
 
-    /**
-     * Retorna todos os partidos com deputados.
-     *
-     * @return Collection<int, object>
-     */
     public function getPartiesWithDeputies(): Collection
     {
         return Deputy::query()
@@ -119,12 +81,6 @@ final class DeputyListService
             ->get();
     }
 
-    /**
-     * Conta total de deputados.
-     *
-     * @param array<string, mixed> $filters
-     * @return int
-     */
     public function count(array $filters = []): int
     {
         return Deputy::query()

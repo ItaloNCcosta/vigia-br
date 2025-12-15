@@ -18,7 +18,7 @@ final class CamaraApiClient
     private const DEFAULT_TIMEOUT = 30;
     private const DEFAULT_RETRIES = 3;
     private const DEFAULT_RETRY_DELAY = 200;
-    private const DEFAULT_CACHE_TTL = 5; // minutos
+    private const DEFAULT_CACHE_TTL = 5;
 
     public function __construct()
     {
@@ -32,13 +32,6 @@ final class CamaraApiClient
             );
     }
 
-    /**
-     * Requisição GET simples.
-     *
-     * @param string $endpoint
-     * @param array<string, mixed> $params
-     * @return array<string, mixed>
-     */
     public function get(string $endpoint, array $params = []): array
     {
         try {
@@ -58,14 +51,6 @@ final class CamaraApiClient
         }
     }
 
-    /**
-     * Requisição GET com cache.
-     *
-     * @param string $endpoint
-     * @param array<string, mixed> $params
-     * @param int $ttlMinutes
-     * @return array<string, mixed>
-     */
     public function cached(string $endpoint, array $params = [], int $ttlMinutes = self::DEFAULT_CACHE_TTL): array
     {
         $key = $this->buildCacheKey($endpoint, $params);
@@ -77,13 +62,6 @@ final class CamaraApiClient
         );
     }
 
-    /**
-     * Paginação automática - retorna Generator.
-     *
-     * @param string $endpoint
-     * @param array<string, mixed> $params
-     * @return Generator<int, array<string, mixed>>
-     */
     public function paginate(string $endpoint, array $params = []): Generator
     {
         $response = $this->get($endpoint, $params);
@@ -101,13 +79,6 @@ final class CamaraApiClient
         }
     }
 
-    /**
-     * Conta total de registros (útil para progress bars).
-     *
-     * @param string $endpoint
-     * @param array<string, mixed> $params
-     * @return int
-     */
     public function count(string $endpoint, array $params = []): int
     {
         $params['itens'] = 1;
@@ -123,12 +94,6 @@ final class CamaraApiClient
         return count($response['dados'] ?? []);
     }
 
-    /**
-     * Requisição GET por URL completa (para paginação).
-     *
-     * @param string $url
-     * @return array<string, mixed>
-     */
     private function getByUrl(string $url): array
     {
         try {
@@ -150,36 +115,21 @@ final class CamaraApiClient
         }
     }
 
-    /**
-     * Encontra o link "next" na resposta.
-     *
-     * @param array<int, array<string, string>> $links
-     * @return array<string, string>|null
-     */
     private function findNextLink(array $links): ?array
     {
         return collect($links)->firstWhere('rel', 'next');
     }
 
-    /**
-     * Constrói a chave de cache.
-     */
     private function buildCacheKey(string $endpoint, array $params): string
     {
         return 'camara:' . md5($endpoint . serialize($params));
     }
 
-    /**
-     * Retorna a URL base da API.
-     */
     private function getBaseUrl(): string
     {
         return config('services.camara.url', 'https://dadosabertos.camara.leg.br/api/v2/');
     }
 
-    /**
-     * Limpa o cache de um endpoint específico.
-     */
     public function clearCache(string $endpoint, array $params = []): bool
     {
         $key = $this->buildCacheKey($endpoint, $params);
@@ -187,9 +137,6 @@ final class CamaraApiClient
         return Cache::forget($key);
     }
 
-    /**
-     * Limpa todo o cache da API da Câmara.
-     */
     public function clearAllCache(): void
     {
         // Isso funciona se você estiver usando tags (Redis/Memcached)

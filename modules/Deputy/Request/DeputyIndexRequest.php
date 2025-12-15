@@ -10,19 +10,11 @@ use Modules\Shared\Enums\StateEnum;
 
 final class DeputyIndexRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, mixed>
-     */
     public function rules(): array
     {
         return [
@@ -37,11 +29,6 @@ final class DeputyIndexRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom messages for validator errors.
-     *
-     * @return array<string, string>
-     */
     public function messages(): array
     {
         return [
@@ -52,11 +39,6 @@ final class DeputyIndexRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get filters from validated data.
-     *
-     * @return array<string, mixed>
-     */
     public function filters(): array
     {
         return $this->safe()->only([
@@ -70,9 +52,6 @@ final class DeputyIndexRequest extends FormRequest
         ]);
     }
 
-    /**
-     * Get per page value.
-     */
     public function perPage(): int
     {
         return (int) $this->validated('per_page', 20);

@@ -1,0 +1,97 @@
+
+
+services:
+  app:
+    build:
+      context: ./docker/app
+    image: vigiabr-app
+    container_name: vigiabr-app
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - vigiabr
+
+  nginx:
+    build:
+      context: ./docker/nginx
+    container_name: vigiabr-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - app
+    networks:
+      - vigiabr
+
+  mysql:
+    build:
+      context: ./docker/mysql
+    container_name: vigiabr-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_DATABASE:-vigia_database}
+      MYSQL_USER: ${DB_USERNAME:-user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - vigiabr
+
+  redis:
+    build:
+      context: ./docker/redis
+    container_name: vigiabr-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - vigiabr
+
+  horizon:
+    build:
+      context: ./docker/app
+    image: vigiabr-app
+    container_name: vigiabr-horizon
+    restart: unless-stopped
+    command: php artisan horizon
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - app
+      - redis
+    networks:
+      - vigiabr
+
+  scheduler:
+    build:
+      context: ./docker/app
+    image: vigiabr-app
+    container_name: vigiabr-scheduler
+    restart: unless-stopped
+    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - app
+      - redis
+    networks:
+      - vigiabr
+
+networks:
+  vigiabr:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:

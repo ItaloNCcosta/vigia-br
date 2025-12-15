@@ -113,8 +113,6 @@ final class CamaraApiClient
         $params['itens'] = 1;
         $response = $this->get($endpoint, $params);
 
-        // A API da Câmara não retorna total diretamente, então estimamos
-        // baseado na última página se disponível
         $lastLink = collect($response['links'] ?? [])
             ->firstWhere('rel', 'last');
 

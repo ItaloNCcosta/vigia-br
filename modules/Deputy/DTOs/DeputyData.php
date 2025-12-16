@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\Deputy\DTOs;
 
-use Modules\Shared\Enums\GenderEnum;
-
 final readonly class DeputyData
 {
     public function __construct(
@@ -14,7 +12,7 @@ final readonly class DeputyData
         public ?string $civilName,
         public ?string $electoralName,
         public ?string $cpf,
-        public ?GenderEnum $gender,
+        public ?string $gender,
         public ?string $birthDate,
         public ?string $birthCity,
         public ?string $birthState,
@@ -38,11 +36,11 @@ final readonly class DeputyData
 
         return new self(
             externalId: (int) $data['id'],
-            name: $data['nome'] ?? $ultimoStatus['nome'] ?? '',
+            name: $ultimoStatus['nome'] ?? $data['nome'] ?? '',
             civilName: $data['nomeCivil'] ?? null,
             electoralName: $ultimoStatus['nomeEleitoral'] ?? null,
             cpf: $data['cpf'] ?? null,
-            gender: GenderEnum::fromApi($data['sexo'] ?? null),
+            gender: $data['sexo'] ?? null,
             birthDate: $data['dataNascimento'] ?? null,
             birthCity: $data['municipioNascimento'] ?? null,
             birthState: $data['ufNascimento'] ?? null,
@@ -57,32 +55,6 @@ final readonly class DeputyData
             socialLinks: $data['redeSocial'] ?? null,
             uri: $data['uri'] ?? null,
             office: !empty($gabinete) ? $gabinete : null,
-        );
-    }
-
-    public static function fromListApi(array $data): self
-    {
-        return new self(
-            externalId: (int) $data['id'],
-            name: $data['nome'] ?? '',
-            civilName: null,
-            electoralName: $data['nome'] ?? null,
-            cpf: null,
-            gender: null,
-            birthDate: null,
-            birthCity: null,
-            birthState: null,
-            deathDate: null,
-            educationLevel: null,
-            stateCode: $data['siglaUf'] ?? '',
-            partyAcronym: $data['siglaPartido'] ?? '',
-            status: null,
-            email: $data['email'] ?? null,
-            photoUrl: $data['urlFoto'] ?? null,
-            websiteUrl: null,
-            socialLinks: null,
-            uri: $data['uri'] ?? null,
-            office: null,
         );
     }
 
@@ -109,11 +81,7 @@ final readonly class DeputyData
             'social_links' => $this->socialLinks,
             'uri' => $this->uri,
             'office' => $this->office,
+            'last_synced_at' => now(),
         ];
-    }
-
-    public function isComplete(): bool
-    {
-        return $this->civilName !== null || $this->birthDate !== null;
     }
 }

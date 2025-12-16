@@ -4,99 +4,56 @@ declare(strict_types=1);
 
 namespace Modules\Deputy\Jobs;
 
-use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Modules\Deputy\Adapters\CamaraDeputyAdapter;
+use Modules\Deputy\DTOs\DeputyData;
 use Modules\Deputy\Models\Deputy;
 use Modules\Shared\Http\CamaraApiClient;
 
 final class SyncAllDeputiesJob implements ShouldQueue
 {
-    use Dispatchable;
-    use InteractsWithQueue;
-    use Queueable;
-    use SerializesModels;
-    use Batchable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-
-    public int $timeout = 300;
+    public int $timeout = 600;
 
     public function __construct(
-        private readonly bool $syncDetails = false,
-        private readonly bool $dispatchExpensesSync = false
+        private readonly int $legislatura = 57
     ) {}
 
-    public function handle(CamaraDeputyAdapter $adapter): void
+    public function handle(CamaraApiClient $api): void
     {
-        if ($this->batch()?->cancelled()) {
-            return;
-        }
+        Log::info('SyncAllDeputiesJob: Iniciando', ['legislatura' => $this->legislatura]);
 
-        Log::info('SyncAllDeputiesJob started', [
-            'sync_details' => $this->syncDetails,
-            'dispatch_expenses' => $this->dispatchExpensesSync,
+        $deputados = $api->getDeputados([
+            'idLegislatura' => $this->legislatura,
+            'itens' => 100,
         ]);
 
-        $created = 0;
-        $updated = 0;
-        $deputyJobs = [];
+        DB::transaction(function () use ($api, $deputados) {
+            $total = 0;
 
-        foreach ($adapter->listCurrentDeputies() as $data) {
-            $externalId = (int) $data['id'];
-            $exists = Deputy::existsByExternalId($externalId);
+            foreach ($deputados as $item) {
+                $detalhes = $api->getDeputado((int) $item['id']);
 
-            Deputy::upsertByExternalId($externalId, [
-                'name' => $data['nome'] ?? '',
-                'electoral_name' => $data['nome'] ?? null,
-                'state_code' => $data['siglaUf'] ?? '',
-                'party_acronym' => $data['siglaPartido'] ?? '',
-                'email' => $data['email'] ?? null,
-                'photo_url' => $data['urlFoto'] ?? null,
-                'uri' => $data['uri'] ?? null,
-                'last_synced_at' => now(),
-            ]);
+                if ($detalhes) {
+                    $dto = DeputyData::fromApi($detalhes);
 
-            $exists ? $updated++ : $created++;
+                    Deputy::updateOrCreate(
+                        ['external_id' => $dto->externalId],
+                        $dto->toArray()
+                    );
 
-            if ($this->syncDetails || $this->dispatchExpensesSync) {
-                $deputyJobs[] = new SyncDeputyDetailsJob(
-                    $externalId,
-                    $this->dispatchExpensesSync
-                );
+                    $total++;
+                }
             }
-        }
 
-        if (!empty($deputyJobs)) {
-            Bus::batch($deputyJobs)
-                ->name('sync-deputies-details')
-                ->allowFailures()
-                ->dispatch();
-        }
-
-        Log::info('SyncAllDeputiesJob completed', [
-            'created' => $created,
-            'updated' => $updated,
-            'detail_jobs_dispatched' => count($deputyJobs),
-        ]);
-    }
-
-    public function failed(\Throwable $exception): void
-    {
-        Log::error('SyncAllDeputiesJob failed', [
-            'error' => $exception->getMessage(),
-            'trace' => $exception->getTraceAsString(),
-        ]);
-    }
-
-    public function tags(): array
-    {
-        return ['sync', 'deputies', 'camara-api'];
+            Log::info('SyncAllDeputiesJob: Finalizado', ['total' => $total]);
+        });
     }
 }

@@ -20,8 +20,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Horizon::auth(function (): bool {
-            return app()->isLocal();
-        });
+        Horizon::auth(fn(): bool => app()->isLocal());
     }
 }

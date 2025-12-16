@@ -12,8 +12,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::job(new SyncLegislaturesJob())->daily()->at('01:00');
-Schedule::job(new SyncPartiesJob())->daily()->at('01:30');
+// Schedule::job(new SyncLegislaturesJob())->daily()->at('01:00');
+// Schedule::job(new SyncPartiesJob())->daily()->at('01:30');
 
 Schedule::job(new SyncAllDeputiesJob())->hourly();
 

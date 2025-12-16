@@ -22,16 +22,15 @@ final class SyncAllDeputiesJob implements ShouldQueue
     public int $tries = 3;
     public int $timeout = 600;
 
-    public function __construct(
-        private readonly int $legislatura = 57
-    ) {}
-
     public function handle(CamaraApiClient $api): void
     {
-        Log::info('SyncAllDeputiesJob: Iniciando', ['legislatura' => $this->legislatura]);
+        $legislatura = $api->getLegislaturaAtual();
+        $idLegislatura = $legislatura['id'] ?? 57;
+
+        Log::info('SyncAllDeputiesJob: Iniciando', ['legislatura' => $idLegislatura]);
 
         $deputados = $api->getDeputados([
-            'idLegislatura' => $this->legislatura,
+            'idLegislatura' => $idLegislatura,
             'itens' => 100,
         ]);
 

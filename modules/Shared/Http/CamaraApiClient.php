@@ -90,6 +90,23 @@ final class CamaraApiClient
         return $response['dados'] ?? [];
     }
 
+    public function getLegislaturaAtual(): ?array
+    {
+        $hoje = date('Y-m-d');
+        $legislaturas = $this->getLegislaturas();
+
+        foreach ($legislaturas as $leg) {
+            $inicio = $leg['dataInicio'] ?? null;
+            $fim = $leg['dataFim'] ?? null;
+
+            if ($inicio && $fim && $hoje >= $inicio && $hoje <= $fim) {
+                return $leg;
+            }
+        }
+
+        return $legislaturas[0] ?? null;
+    }
+
     private function hasNextPage(array $links): bool
     {
         foreach ($links as $link) {

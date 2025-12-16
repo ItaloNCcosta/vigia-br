@@ -31,7 +31,6 @@
             {{-- PERFIL --}}
             <section x-show="tab==='perfil'" x-cloak class="space-y-6">
                 <div class="grid sm:grid-cols-2 gap-6">
-                    {{-- Informações básicas --}}
                     <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200/70">
                         <h3 class="text-sm font-semibold text-slate-500 uppercase mb-3">Informações básicas</h3>
                         <ul class="text-sm space-y-2">
@@ -54,24 +53,17 @@
                         </ul>
                     </div>
 
-                    {{-- Resumo financeiro --}}
                     <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200/70">
                         <h3 class="text-sm font-semibold text-slate-500 uppercase mb-3">Resumo financeiro</h3>
                         @php
-                            $total = $expenses->sum('net_amount');
-
+                            $total = $expenses->sum('net_value');
                             $months = $expenses
-                                ->map(fn($e) => \Illuminate\Support\Carbon::parse($e->document_date)->format('Y-m'))
+                                ->map(fn($e) => $e->year . '-' . str_pad($e->month, 2, '0', STR_PAD_LEFT))
                                 ->unique()
                                 ->count();
                             $months = $months ?: 1;
-
                             $average = $total / $months;
-
-                            $last = $expenses->sortByDesc('document_date')->first();
-                            $lastDate = $last
-                                ? \Illuminate\Support\Carbon::parse($last->document_date)->format('d/m/Y')
-                                : null;
+                            $last = $expenses->first();
                         @endphp
 
                         <ul class="text-sm space-y-2">
@@ -85,7 +77,7 @@
                             </li>
                             <li>
                                 Última despesa:
-                                <strong>{{ $lastDate ?? '—' }}</strong>
+                                <strong>{{ $last ? optional($last->document_date)->format('d/m/Y') : '—' }}</strong>
                             </li>
                         </ul>
                     </div>
@@ -106,24 +98,12 @@
                                 class="rounded-lg border-slate-300 focus:ring-emerald-500 focus:border-emerald-500">
                                 <option value="">Todos</option>
                                 @foreach ($years as $year)
-                                    <option value="{{ $year }}" @selected(request('year') == $year)>
-                                        {{ $year }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        {{-- <div>
-                            <label class="block text-xs text-slate-500">Mês</label>
-                            <select name="month"
-                                class="rounded-lg border-slate-300 focus:ring-emerald-500 focus:border-emerald-500">
-                                <option value="">Todos</option>
-                                @foreach ($filterMonths as $m)
-                                    <option value="{{ $m }}" @selected(($filters['month'] ?? '') == $m)>
-                                        {{ \Carbon\Carbon::create()->month($m)->format('F') }}
+                                    <option value="{{ $year }}" @selected(($filters['year'] ?? '') == $year)>
+                                        {{ $year }}
                                     </option>
                                 @endforeach
                             </select>
-                        </div> --}}
+                        </div>
 
                         <div class="flex gap-2">
                             <button type="submit"
@@ -133,7 +113,6 @@
                                 class="text-slate-600 px-3 py-1 rounded-md hover:bg-slate-100">Limpar</a>
                         </div>
                     </form>
-
                 </div>
 
                 <div class="overflow-hidden rounded-xl border border-slate-200/70 shadow-sm bg-white">
@@ -150,17 +129,14 @@
                         <tbody class="divide-y divide-slate-100">
                             @forelse($expenses as $expense)
                                 <tr class="hover:bg-slate-50">
-                                    {{-- Data do documento --}}
                                     <td class="px-4 py-3">
-                                        {{ \Illuminate\Support\Carbon::parse($expense->document_date)->format('d/m/Y') }}
+                                        {{ optional($expense->document_date)->format('d/m/Y') ?? '—' }}
                                     </td>
 
-                                    {{-- Ano/Mês --}}
                                     <td class="px-4 py-3">
                                         {{ $expense->year }}/{{ str_pad($expense->month, 2, '0', STR_PAD_LEFT) }}
                                     </td>
 
-                                    {{-- Informações do documento --}}
                                     <td class="px-4 py-3">
                                         <div class="font-semibold">#{{ $expense->document_number }}</div>
                                         <div class="text-xs text-slate-500">
@@ -172,7 +148,6 @@
                                         </div>
                                     </td>
 
-                                    {{-- Tipo de despesa --}}
                                     <td class="px-4 py-3">
                                         <div class="font-semibold text-slate-700">
                                             {{ $expense->expense_type }}
@@ -182,14 +157,13 @@
                                         </div>
                                     </td>
 
-                                    {{-- Valor líquido --}}
                                     <td class="px-4 py-3 text-right">
-                                        R$ {{ number_format($expense->net_amount, 2, ',', '.') }}
+                                        R$ {{ number_format($expense->net_value, 2, ',', '.') }}
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-4 py-6 text-center text-slate-500">
+                                    <td colspan="5" class="px-4 py-6 text-center text-slate-500">
                                         Nenhuma despesa encontrada.
                                     </td>
                                 </tr>
@@ -197,7 +171,7 @@
                         </tbody>
                     </table>
 
-                    <div class="mt-10 flex justify-center">
+                    <div class="p-4 flex justify-center">
                         <x-pagination :paginator="$expenses" />
                     </div>
                 </div>

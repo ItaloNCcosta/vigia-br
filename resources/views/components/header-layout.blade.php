@@ -1,13 +1,13 @@
 @props([
     'names' => ['VigiaBR'],
     'period' => 10000,
-    'href' => url('/'),
+    'href' => '/',
     'class' => 'flex items-center gap-2 font-bold text-lg text-emerald-600',
 ])
 
 <header class="bg-white border-b border-slate-200/60">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-        <a href="{{ $href }}" class="{{ $class }}" x-data="{ names: @js($names), i: 0, t: null, start() { this.t = setInterval(() => this.i = (this.i + 1) % this.names.length, {{ (int) $period }}) } }" x-init="start()"
+        <a href="{{ url($href) }}" class="{{ $class }}" x-data="{ names: @js($names), i: 0, t: null, start() { this.t = setInterval(() => this.i = (this.i + 1) % this.names.length, {{ (int) $period }}) } }" x-init="start()"
             @mouseenter="clearInterval(t)" @mouseleave="start()">
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
@@ -17,8 +17,8 @@
         </a>
         <nav class="hidden md:flex gap-6 text-sm font-medium text-slate-600">
             <a href="{{ route('deputies.index') }}" class="hover:text-emerald-600">Buscar</a>
-            <a href="{{-- route('expenses.index') --}}" class="hover:text-emerald-600">Gastos</a>
-            <a href="{{ route('deputies.ranking') }}" class="hover:text-emerald-600">Ranking</a>
+            <a href="{{ route('expenses.index') }}" class="hover:text-emerald-600">Gastos</a>
+            {{-- <a href="{{ route('deputies.ranking') }}" class="hover:text-emerald-600">Ranking</a> --}}
             <a href="{{ route('about') }}" class="hover:text-emerald-600">Sobre</a>
         </nav>
     </div>

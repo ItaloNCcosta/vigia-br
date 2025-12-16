@@ -62,10 +62,10 @@ final class DeputyController extends Controller
         $limit = (int) $request->get('limit', 10);
 
         return view('deputies.ranking', [
-            'ranking' => $this->rankingDeputies->execute($filters, $limit),
+            'deputies' => $this->rankingDeputies->execute($filters, $limit),
             'filters' => $filters,
-            'stateOptions' => StateEnum::cases(),
-            'partyOptions' => $this->getPartyOptions->execute(),
+            'states' => StateEnum::cases(),
+            'parties' => $this->getPartyOptions->execute(),
         ]);
     }
 }

@@ -10,11 +10,11 @@
             <form action="{{ route('deputies.index') }}" id="buscar" class="mt-8 max-w-2xl mx-auto" method="GET">
                 <div class="flex rounded-xl overflow-hidden shadow-lg">
                     <div class="relative flex-1">
-                        <input id="searchInput" name="name" type="text" value="{{ request('name') }}"
+                        <input id="searchInput" name="name" type="text" value="{{ $filters['name'] ?? '' }}"
                             placeholder="Digite o nome do deputado…"
                             class="w-full px-4 py-4 text-sm bg-slate-900/90 text-white focus:outline-none" />
 
-                        @if (request('name'))
+                        @if ($filters['name'] ?? null)
                             <a href="{{ route('deputies.index') }}"
                                 class="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-200"
                                 aria-label="Limpar busca">
@@ -38,16 +38,15 @@
     <section class="bg-white border-b border-slate-200/60">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <p class="text-sm text-slate-600">Refinar resultados</p>
-            <button class="md:hidden text-emerald-600 text-sm font-medium inline-flex items-center gap-1">
-                <span x-text="open ? 'Fechar filtros' : 'Filtros'"></span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-            </button>
         </div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
             <form method="GET" action="{{ route('deputies.index') }}"
                 class="grid grid-cols-1 md:grid-cols-6 gap-4 md:gap-6">
+
+                @if ($filters['name'] ?? null)
+                    <input type="hidden" name="name" value="{{ $filters['name'] }}">
+                @endif
+
                 <div class="md:col-span-2">
                     <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">
                         Estado
@@ -55,10 +54,11 @@
                     <select name="state"
                         class="w-full rounded-lg border-slate-300 text-sm focus:ring-emerald-500 focus:border-emerald-500">
                         <option value="">Todos</option>
-                        {{-- @foreach ($states as $item)
-                            <option value="{{ $item->value }}" @selected(request('state') === $item->value)>{{ $item->value }}
+                        @foreach ($states as $state)
+                            <option value="{{ $state->value }}" @selected(($filters['state'] ?? '') === $state->value)>
+                                {{ $state->value }} - {{ $state->label() }}
                             </option>
-                        @endforeach --}}
+                        @endforeach
                     </select>
                 </div>
 
@@ -69,10 +69,11 @@
                     <select name="party"
                         class="w-full rounded-lg border-slate-300 text-sm focus:ring-emerald-500 focus:border-emerald-500">
                         <option value="">Todos</option>
-                        {{-- @foreach ($party as $item)
-                            <option value="{{ $item->value }}" @selected(request('party') === $item->value)>{{ $item->value }}
+                        @foreach ($parties as $party)
+                            <option value="{{ $party->value }}" @selected(($filters['party'] ?? '') === $party->value)>
+                                {{ $party->name }}
                             </option>
-                        @endforeach --}}
+                        @endforeach
                     </select>
                 </div>
 
@@ -110,11 +111,11 @@
                         <div>
                             <dt class="font-semibold text-slate-500">Gasto total</dt>
                             <dd class="text-slate-800">R$
-                                {{ number_format($deputy->expenses->sum('net_amount'), 2, ',', '.') }}</dd>
+                                {{ number_format($deputy->expenses->sum('net_value'), 2, ',', '.') }}</dd>
                         </div>
                         <div>
                             <dt class="font-semibold text-slate-500">Última atualização</dt>
-                            <dd class="text-slate-800">{{ optional($deputy->expenses->max('last_synced_at'))->format('d/m/Y') }}
+                            <dd class="text-slate-800">{{ optional($deputy->last_synced_at)->format('d/m/Y') ?? '—' }}
                             </dd>
                         </div>
                     </dl>

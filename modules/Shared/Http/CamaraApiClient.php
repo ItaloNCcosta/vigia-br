@@ -4,145 +4,100 @@ declare(strict_types=1);
 
 namespace Modules\Shared\Http;
 
-use Generator;
-use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Client;
 
 final class CamaraApiClient
 {
-    private PendingRequest $http;
-
-    private const DEFAULT_TIMEOUT = 30;
-    private const DEFAULT_RETRIES = 3;
-    private const DEFAULT_RETRY_DELAY = 200;
-    private const DEFAULT_CACHE_TTL = 5;
+    private Client $client;
 
     public function __construct()
     {
-        $this->http = Http::acceptJson()
-            ->baseUrl($this->getBaseUrl())
-            ->timeout((int) config('services.camara.timeout', self::DEFAULT_TIMEOUT))
-            ->retry(
-                self::DEFAULT_RETRIES,
-                self::DEFAULT_RETRY_DELAY,
-                throw: false
-            );
+        $this->client = new Client([
+            'base_uri' => 'https://dadosabertos.camara.leg.br/api/v2/',
+            'timeout' => 30,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Accept-Language' => 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Cache-Control' => 'no-cache',
+            ],
+        ]);
     }
 
     public function get(string $endpoint, array $params = []): array
     {
-        try {
-            $response = $this->http->get($endpoint, $params);
-            $response->throw();
+        $response = $this->client->get($endpoint, ['query' => $params]);
 
-            return $response->json() ?? ['dados' => [], 'links' => []];
-        } catch (RequestException $e) {
-            Log::warning('Camara API Error', [
-                'endpoint' => $endpoint,
-                'status' => $e->response?->status(),
-                'params' => $params,
-                'message' => $e->getMessage(),
-            ]);
-
-            return ['dados' => [], 'links' => []];
-        }
+        return json_decode($response->getBody()->getContents(), true);
     }
 
-    public function cached(string $endpoint, array $params = [], int $ttlMinutes = self::DEFAULT_CACHE_TTL): array
+    public function getDeputados(array $params = []): array
     {
-        $key = $this->buildCacheKey($endpoint, $params);
+        $response = $this->get('deputados', $params);
 
-        return Cache::remember(
-            $key,
-            now()->addMinutes($ttlMinutes),
-            fn() => $this->get($endpoint, $params)
-        );
+        return $response['dados'] ?? [];
     }
 
-    public function paginate(string $endpoint, array $params = []): Generator
+    public function getDeputado(int $id): ?array
     {
-        $response = $this->get($endpoint, $params);
+        $response = $this->get("deputados/{$id}");
 
-        yield from $response['dados'] ?? [];
+        return $response['dados'] ?? null;
+    }
 
+    public function getDeputadoDespesas(int $id, array $params = []): array
+    {
+        $params['itens'] = $params['itens'] ?? 100;
+
+        $all = [];
+        $page = 1;
+        $maxPages = 50;
+
+        $params['pagina'] = $page;
+        $response = $this->get("deputados/{$id}/despesas", $params);
+
+        $all = array_merge($all, $response['dados'] ?? []);
         $links = $response['links'] ?? [];
 
-        while ($next = $this->findNextLink($links)) {
-            $response = $this->getByUrl($next['href']);
+        while ($this->hasNextPage($links) && $page < $maxPages) {
+            $page++;
+            $params['pagina'] = $page;
 
-            yield from $response['dados'] ?? [];
+            $response = $this->get("deputados/{$id}/despesas", $params);
 
+            $all = array_merge($all, $response['dados'] ?? []);
             $links = $response['links'] ?? [];
         }
+
+        return $all;
     }
 
-    public function count(string $endpoint, array $params = []): int
+    public function getPartidos(array $params = []): array
     {
-        $params['itens'] = 1;
-        $response = $this->get($endpoint, $params);
+        $params['itens'] = $params['itens'] ?? 100;
 
-        $lastLink = collect($response['links'] ?? [])
-            ->firstWhere('rel', 'last');
+        $response = $this->get('partidos', $params);
 
-        if ($lastLink && preg_match('/pagina=(\d+)/', $lastLink['href'], $matches)) {
-            return (int) $matches[1];
+        return $response['dados'] ?? [];
+    }
+
+    public function getLegislaturas(array $params = []): array
+    {
+        $params['itens'] = $params['itens'] ?? 100;
+
+        $response = $this->get('legislaturas', $params);
+
+        return $response['dados'] ?? [];
+    }
+
+    private function hasNextPage(array $links): bool
+    {
+        foreach ($links as $link) {
+            if (($link['rel'] ?? '') === 'next') {
+                return true;
+            }
         }
 
-        return count($response['dados'] ?? []);
-    }
-
-    private function getByUrl(string $url): array
-    {
-        try {
-            $response = Http::acceptJson()
-                ->timeout(config('services.camara.timeout', self::DEFAULT_TIMEOUT))
-                ->get($url);
-
-            $response->throw();
-
-            return $response->json() ?? ['dados' => [], 'links' => []];
-        } catch (RequestException $e) {
-            Log::warning('Camara API Pagination Error', [
-                'url' => $url,
-                'status' => $e->response?->status(),
-                'message' => $e->getMessage(),
-            ]);
-
-            return ['dados' => [], 'links' => []];
-        }
-    }
-
-    private function findNextLink(array $links): ?array
-    {
-        return collect($links)->firstWhere('rel', 'next');
-    }
-
-    private function buildCacheKey(string $endpoint, array $params): string
-    {
-        return 'camara:' . md5($endpoint . serialize($params));
-    }
-
-    private function getBaseUrl(): string
-    {
-        return config('services.camara.url', 'https://dadosabertos.camara.leg.br/api/v2/');
-    }
-
-    public function clearCache(string $endpoint, array $params = []): bool
-    {
-        $key = $this->buildCacheKey($endpoint, $params);
-
-        return Cache::forget($key);
-    }
-
-    public function clearAllCache(): void
-    {
-        // Isso funciona se você estiver usando tags (Redis/Memcached)
-        // Cache::tags(['camara'])->flush();
-
-        // Para file/database driver, você precisaria de uma abordagem diferente
-        Log::info('Cache clear requested for Camara API');
+        return false;
     }
 }

@@ -34,7 +34,7 @@ enum StateEnum: string
     case SE = 'SE';
     case TO = 'TO';
 
-    public function name(): string
+    public function label(): string
     {
         return match ($this) {
             self::AC => 'Acre',
@@ -65,96 +65,5 @@ enum StateEnum: string
             self::SE => 'Sergipe',
             self::TO => 'Tocantins',
         };
-    }
-
-    public function region(): string
-    {
-        return match ($this) {
-            self::AC, self::AP, self::AM, self::PA, self::RO, self::RR, self::TO => 'Norte',
-            self::AL, self::BA, self::CE, self::MA, self::PB, self::PE, self::PI, self::RN, self::SE => 'Nordeste',
-            self::DF, self::GO, self::MT, self::MS => 'Centro-Oeste',
-            self::ES, self::MG, self::RJ, self::SP => 'Sudeste',
-            self::PR, self::RS, self::SC => 'Sul',
-        };
-    }
-
-    public function deputySeats(): int
-    {
-        return match ($this) {
-            self::SP => 70,
-            self::MG => 53,
-            self::RJ => 46,
-            self::BA => 39,
-            self::RS => 31,
-            self::PR => 30,
-            self::PE => 25,
-            self::CE => 22,
-            self::MA => 18,
-            self::GO => 17,
-            self::PA => 17,
-            self::SC => 16,
-            self::PB => 12,
-            self::ES => 10,
-            self::PI => 10,
-            self::AL => 9,
-            self::RN => 8,
-            self::AM => 8,
-            self::MT => 8,
-            self::MS => 8,
-            self::DF => 8,
-            self::SE => 8,
-            self::RO => 8,
-            self::TO => 8,
-            self::AC => 8,
-            self::AP => 8,
-            self::RR => 8,
-        };
-    }
-
-    public static function fromApi(?string $value): ?self
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        return self::tryFrom(strtoupper($value));
-    }
-
-    public static function toSelectArray(): array
-    {
-        $states = [];
-
-        foreach (self::cases() as $state) {
-            $states[$state->value] = $state->name();
-        }
-
-        asort($states);
-
-        return $states;
-    }
-
-    public static function groupedByRegion(): array
-    {
-        $grouped = [];
-
-        foreach (self::cases() as $state) {
-            $region = $state->region();
-            $grouped[$region][$state->value] = $state->name();
-        }
-
-        ksort($grouped);
-        foreach ($grouped as &$states) {
-            asort($states);
-        }
-
-        return $grouped;
-    }
-
-    public static function byRegion(string $region): array
-    {
-        return array_filter(
-            self::cases(),
-            fn(self $state) => $state->region() === $region
-        );
     }
 }

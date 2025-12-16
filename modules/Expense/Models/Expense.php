@@ -4,20 +4,21 @@ declare(strict_types=1);
 
 namespace Modules\Expense\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Deputy\Models\Deputy;
 use Modules\Shared\Traits\HasExternalId;
-use OwenIt\Auditing\Contracts\Auditable;
+use Modules\Shared\Traits\HasSyncStatus;
 
-final class Expense extends Model implements Auditable
+final class Expense extends Model
 {
-    use \OwenIt\Auditing\Auditable;
-    use HasFactory;
     use HasUuids;
     use HasExternalId;
+    use HasSyncStatus;
+
+    protected $table = 'expenses';
 
     protected $fillable = [
         'deputy_id',
@@ -60,25 +61,28 @@ final class Expense extends Model implements Auditable
         return $this->belongsTo(Deputy::class);
     }
 
-    public function scopeByYear($query, int $year)
+    public function scopeByYear(Builder $query, int $year): Builder
     {
         return $query->where('year', $year);
     }
 
-    public function scopeByMonth($query, int $month)
+    public function scopeByMonth(Builder $query, int $month): Builder
     {
         return $query->where('month', $month);
     }
 
-    public function scopeByPeriod($query, ?string $start, ?string $end)
-    {
-        return $query
-            ->when($start, fn($q) => $q->whereDate('document_date', '>=', $start))
-            ->when($end, fn($q) => $q->whereDate('document_date', '<=', $end));
-    }
-
-    public function scopeByType($query, string $type)
+    public function scopeByType(Builder $query, string $type): Builder
     {
         return $query->where('expense_type', $type);
+    }
+
+    public function scopeBySupplier(Builder $query, string $supplier): Builder
+    {
+        return $query->where('supplier_name', 'like', "%{$supplier}%");
+    }
+
+    public function scopeByPeriod(Builder $query, string $start, string $end): Builder
+    {
+        return $query->whereBetween('document_date', [$start, $end]);
     }
 }

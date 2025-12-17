@@ -20,7 +20,7 @@ final class SyncAllDeputiesJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-    public int $timeout = 600;
+    public int $timeout = 120;
 
     public function handle(CamaraApiClient $api): void
     {
@@ -34,25 +34,21 @@ final class SyncAllDeputiesJob implements ShouldQueue
             'itens' => 100,
         ]);
 
-        DB::transaction(function () use ($api, $deputados) {
-            $total = 0;
+        $chunks = array_chunk($deputados, 10);
+        $totalJobs = 0;
 
-            foreach ($deputados as $item) {
-                $detalhes = $api->getDeputado((int) $item['id']);
+        foreach ($chunks as $index => $chunk) {
+            foreach ($chunk as $item) {
+                SyncDeputyDetailsJob::dispatch((int) $item['id'])
+                    ->delay(now()->addSeconds($totalJobs * 2));
 
-                if ($detalhes) {
-                    $dto = DeputyData::fromApi($detalhes);
-
-                    Deputy::updateOrCreate(
-                        ['external_id' => $dto->externalId],
-                        $dto->toArray()
-                    );
-
-                    $total++;
-                }
+                $totalJobs++;
             }
+        }
 
-            Log::info('SyncAllDeputiesJob: Finalizado', ['total' => $total]);
-        });
+        Log::info('SyncAllDeputiesJob: Finalizado', [
+            'total_deputies' => count($deputados),
+            'jobs_dispatched' => $totalJobs
+        ]);
     }
 }

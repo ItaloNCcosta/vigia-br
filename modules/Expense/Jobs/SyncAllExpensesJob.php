@@ -18,7 +18,10 @@ final class SyncAllExpensesJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-    public int $timeout = 3600;
+    public int $timeout = 300;
+
+    private const BATCH_SIZE = 20;
+    private const DELAY_BETWEEN_BATCHES = 60;
 
     public function __construct(
         private readonly ?int $year = null
@@ -30,18 +33,34 @@ final class SyncAllExpensesJob implements ShouldQueue
 
         Log::info('SyncAllExpensesJob: Iniciando', ['years' => $years]);
 
-        $deputies = Deputy::all();
+        $deputies = Deputy::select('id', 'name', 'external_id')
+            ->orderBy('id')
+            ->get();
 
-        foreach ($deputies as $deputy) {
-            foreach ($years as $year) {
-                SyncDeputyExpensesJob::dispatch($deputy->id, $year);
+        $totalJobs = 0;
+        $batchDelay = 0;
+
+        foreach ($deputies->chunk(self::BATCH_SIZE) as $batchIndex => $deputyBatch) {
+            $jobs = [];
+
+            foreach ($deputyBatch as $deputy) {
+                foreach ($years as $year) {
+                    $jobs[] = (new SyncDeputyExpensesJob($deputy->id, $year))
+                        ->delay(now()->addSeconds($batchDelay));
+
+                    $totalJobs++;
+                    $batchDelay += 3;
+                }
             }
+
+            $batchDelay += self::DELAY_BETWEEN_BATCHES;
         }
 
         Log::info('SyncAllExpensesJob: Jobs disparados', [
             'deputies' => $deputies->count(),
             'years' => count($years),
-            'total_jobs' => $deputies->count() * count($years),
+            'total_jobs' => $totalJobs,
+            'estimated_duration_minutes' => ceil($batchDelay / 60)
         ]);
     }
 

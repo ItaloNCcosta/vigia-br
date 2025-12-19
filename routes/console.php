@@ -11,9 +11,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::job(new SyncDeputiesBatchJob())
-    ->dailyAt('03:00')
-    ->onQueue('heavy');
+    ->dailyAt('03:00');
 
 Schedule::job(new SyncDeputyExpensesBatchJob())
-    ->hourly()
-    ->onQueue('heavy');
+    ->hourly();

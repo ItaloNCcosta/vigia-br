@@ -9,7 +9,7 @@ Route::get('/', fn () => redirect()->route('deputies.index'));
 Route::prefix('deputados')->name('deputies.')->group(function () {
     Route::get('/', [DeputyController::class, 'index'])->name('index');
     // Route::get('/ranking', [DeputyController::class, 'ranking'])->name('ranking');
-    Route::get('/{id}', [DeputyController::class, 'show'])->name('show');
+    Route::get('/{deputy}', [DeputyController::class, 'show'])->name('show');
 });
 
 Route::prefix('despesas')->name('expenses.')->group(function () {

@@ -14,7 +14,7 @@ final class EnsureDeputyRecentExpensesJob implements ShouldQueue
     use Dispatchable, Queueable;
 
     public function __construct(
-        private readonly int $deputyId
+        private readonly string|int $deputyId
     ) {}
 
     public function handle(ExpenseSyncService $service): void

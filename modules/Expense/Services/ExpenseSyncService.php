@@ -14,9 +14,11 @@ final class ExpenseSyncService
         private readonly CamaraExpenseAdapter $adapter
     ) {}
 
-    public function syncByYear(int $deputyId, int $year): void
+    public function syncByYear(string $deputyId, int $year): void
     {
-        $deputy = Deputy::select('id', 'external_id')->find($deputyId);
+        $deputy = Deputy::select('id', 'external_id')
+            ->where('id', $deputyId)
+            ->firstOrFail();
 
         if (!$deputy) {
             return;
@@ -39,7 +41,7 @@ final class ExpenseSyncService
         );
     }
 
-    public function syncRecent(int $deputyId): void
+    public function syncRecent(string $deputyId): void
     {
         $this->syncByYear($deputyId, (int) date('Y'));
     }

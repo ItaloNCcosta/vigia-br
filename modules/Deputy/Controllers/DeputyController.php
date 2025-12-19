@@ -51,8 +51,6 @@ final class DeputyController extends Controller
         EnsureDeputyRecentExpensesJob::dispatch($deputy->id)
             ->onQueue('ondemand');
 
-        $deputy = $findDeputyService->execute($deputy->id);
-
         $filters = $request->only(['year']);
 
         return view('deputies.show', [

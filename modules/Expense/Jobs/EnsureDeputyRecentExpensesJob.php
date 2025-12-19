@@ -9,17 +9,16 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Modules\Expense\Services\ExpenseSyncService;
 
-final class SyncDeputyExpensesJob implements ShouldQueue
+final class EnsureDeputyRecentExpensesJob implements ShouldQueue
 {
     use Dispatchable, Queueable;
 
     public function __construct(
-        private readonly int $deputyId,
-        private readonly int $year
+        private readonly int $deputyId
     ) {}
 
     public function handle(ExpenseSyncService $service): void
     {
-        $service->syncByYear($this->deputyId, $this->year);
+        $service->syncRecent($this->deputyId);
     }
 }

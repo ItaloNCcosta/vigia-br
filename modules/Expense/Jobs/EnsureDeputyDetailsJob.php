@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Modules\Deputy\Services\DeputySyncService;
 
-final class SyncDeputyDetailsJob implements ShouldQueue
+final class EnsureDeputyDetailsJob implements ShouldQueue
 {
     use Dispatchable, Queueable;
 

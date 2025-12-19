@@ -6,6 +6,7 @@ namespace Modules\Deputy\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Deputy\Jobs\EnsureDeputyDetailsJob;
 use Modules\Deputy\Models\Deputy;
@@ -41,15 +42,18 @@ final class DeputyController extends Controller
     public function show(
         Request $request,
         Deputy $deputy,
-        FindDeputyService $findDeputyService,
         GetExpenseYearsService $getExpenseYearsService,
         ListExpensesByDeputyService $listExpensesByDeputyService
     ): View {
+        Log::info('=== INÍCIO DO SHOW ===', ['deputy_id' => $deputy->id]);
+
         EnsureDeputyDetailsJob::dispatch($deputy->external_id)
             ->onQueue('ondemand');
 
         EnsureDeputyRecentExpensesJob::dispatch($deputy->id)
             ->onQueue('ondemand');
+
+        Log::info('=== FIM DO SHOW ===');
 
         $filters = $request->only(['year']);
 

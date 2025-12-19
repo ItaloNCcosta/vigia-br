@@ -115,7 +115,7 @@
                         </div>
                         <div>
                             <dt class="font-semibold text-slate-500">Última atualização</dt>
-                            <dd class="text-slate-800">{{ optional($deputy->last_synced_at)->format('d/m/Y') ?? '—' }}
+                            <dd class="text-slate-800">{{ optional($deputy->last_synced_at)->format('d/m/Y H:i') ?? '—' }}
                             </dd>
                         </div>
                     </dl>

@@ -61,7 +61,7 @@ final class CamaraDeputyAdapter implements ApiAdapterInterface
         ]);
     }
 
-    public function listExpenses(int $deputyId, array $filters = []): Generator
+    public function listExpenses(string $deputyId, array $filters = []): Generator
     {
         return $this->client->paginate(
             self::ENDPOINT . "/{$deputyId}/despesas",
@@ -69,12 +69,12 @@ final class CamaraDeputyAdapter implements ApiAdapterInterface
         );
     }
 
-    public function listExpensesByYear(int $deputyId, int $year): Generator
+    public function listExpensesByYear(string $deputyId, int $year): Generator
     {
         return $this->listExpenses($deputyId, ['ano' => $year]);
     }
 
-    public function listExpensesByMonth(int $deputyId, int $year, int $month): Generator
+    public function listExpensesByMonth(string $deputyId, int $year, int $month): Generator
     {
         return $this->listExpenses($deputyId, [
             'ano' => $year,

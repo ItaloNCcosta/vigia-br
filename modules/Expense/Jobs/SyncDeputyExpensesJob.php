@@ -14,7 +14,7 @@ final class SyncDeputyExpensesJob implements ShouldQueue
     use Dispatchable, Queueable;
 
     public function __construct(
-        private readonly int $deputyId,
+        private readonly string $deputyId,
         private readonly int $year
     ) {}
 

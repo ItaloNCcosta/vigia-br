@@ -30,7 +30,7 @@ final class SyncCamaraCommand extends Command
 
         if ($onlyDeputies) {
             $this->info('Sincronizando deputados da legislatura atual...');
-            SyncAllDeputiesJob::dispatchSync();
+            SyncAllDeputiesJob::dispatch();
             $this->info('Deputados sincronizados!');
         }
 
@@ -41,7 +41,7 @@ final class SyncCamaraCommand extends Command
                 $this->info('Sincronizando despesas de todos os anos da legislatura atual...');
             }
             $this->warn('Isso pode demorar vários minutos...');
-            SyncAllExpensesJob::dispatchSync($year);
+            SyncAllExpensesJob::dispatch($year);
             $this->info('Jobs de despesas disparados!');
         }
 

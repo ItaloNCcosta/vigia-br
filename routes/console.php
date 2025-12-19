@@ -16,5 +16,4 @@ Artisan::command('inspire', function () {
 // Schedule::job(new SyncPartiesJob())->daily()->at('01:30');
 
 Schedule::job(new SyncAllDeputiesJob())->hourly();
-
-Schedule::job(new SyncAllExpensesJob())->everyFifteenMinutes();
+Schedule::job(new SyncAllExpensesJob())->everyFifteenMinutes()->withoutOverlapping();

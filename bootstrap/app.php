@@ -3,7 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Support\Facades\Schedule;
+use Illuminate\Console\Scheduling\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command(
-            'queue:work redis --queue=ondemand,default --sleep=3 --tries=3 --timeout=120 --memory=256'
+            'queue:work redis --queue=ondemand,default --sleep=3 --tries=3 --timeout=120 --memory=256 --stop-when-empty'
         )
             ->everyMinute()
             ->withoutOverlapping();

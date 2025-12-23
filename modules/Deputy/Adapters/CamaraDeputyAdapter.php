@@ -48,7 +48,7 @@ final class CamaraDeputyAdapter implements ApiAdapterInterface
     public function paginateAsDto(array $filters = []): Generator
     {
         foreach ($this->paginate($filters) as $data) {
-            yield DeputyData::fromListApi($data);
+            yield DeputyData::fromApi($data);
         }
     }
 

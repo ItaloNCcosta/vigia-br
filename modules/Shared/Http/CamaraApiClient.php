@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Shared\Http;
 
+use Generator;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 final class CamaraApiClient
 {
@@ -105,6 +107,28 @@ final class CamaraApiClient
         }
 
         return $legislaturas[0] ?? null;
+    }
+
+    public function paginate(string $endpoint, array $params = []): Generator
+    {
+        Log::info('aqui no paginate');
+        $params['itens'] = $params['itens'] ?? 100;
+        $page = 1;
+        $maxPages = 50;
+
+        do {
+            $params['pagina'] = $page;
+            $response = $this->get($endpoint, $params);
+
+            $data = $response['dados'] ?? [];
+            foreach ($data as $item) {
+                yield $item;
+            }
+
+            $links = $response['links'] ?? [];
+            $hasNext = $this->hasNextPage($links);
+            $page++;
+        } while ($hasNext && $page <= $maxPages);
     }
 
     private function hasNextPage(array $links): bool

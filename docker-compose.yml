@@ -64,7 +64,7 @@ services:
     image: vigiabr-app
     container_name: vigiabr-horizon
     restart: unless-stopped
-    command: php artisan horizon
+    # command: php artisan horizon
     volumes:
       - ./:/var/www/html
     depends_on:

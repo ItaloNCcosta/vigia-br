@@ -110,12 +110,14 @@
                     <dl class="grid grid-cols-2 gap-3 text-xs text-slate-600 flex-1">
                         <div>
                             <dt class="font-semibold text-slate-500">Gasto total</dt>
-                            <dd class="text-slate-800">R$
-                                {{ number_format($deputy->expenses->sum('net_value'), 2, ',', '.') }}</dd>
+                            <dd class="text-slate-800">
+                                R$ {{ number_format($deputy->total_expenses ?? 0, 2, ',', '.') }}
+                            </dd>
                         </div>
                         <div>
                             <dt class="font-semibold text-slate-500">Última atualização</dt>
-                            <dd class="text-slate-800">{{ optional($deputy->last_synced_at)->format('d/m/Y H:i') ?? '—' }}
+                            <dd class="text-slate-800">
+                                {{ optional($deputy->last_synced_at)->format('d/m/Y H:i') ?? '—' }}
                             </dd>
                         </div>
                     </dl>

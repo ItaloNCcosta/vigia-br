@@ -6,7 +6,9 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Modules\Deputy\Jobs\SyncAllDeputiesJob;
+use Modules\Deputy\Jobs\SyncDeputiesBatchJob;
 use Modules\Expense\Jobs\SyncAllExpensesJob;
+use Modules\Expense\Jobs\SyncDeputyExpensesBatchJob;
 
 final class SyncCamaraCommand extends Command
 {
@@ -30,7 +32,7 @@ final class SyncCamaraCommand extends Command
 
         if ($onlyDeputies) {
             $this->info('Sincronizando deputados da legislatura atual...');
-            SyncAllDeputiesJob::dispatch();
+            SyncDeputiesBatchJob::dispatch();
             $this->info('Deputados sincronizados!');
         }
 
@@ -41,7 +43,7 @@ final class SyncCamaraCommand extends Command
                 $this->info('Sincronizando despesas de todos os anos da legislatura atual...');
             }
             $this->warn('Isso pode demorar vários minutos...');
-            SyncAllExpensesJob::dispatch($year);
+            SyncDeputyExpensesBatchJob::dispatch($year);
             $this->info('Jobs de despesas disparados!');
         }
 

@@ -10,12 +10,12 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Deputy\Jobs\EnsureDeputyDetailsJob;
 use Modules\Deputy\Models\Deputy;
-use Modules\Deputy\Services\FindDeputyService;
 use Modules\Deputy\Services\GetExpenseYearsService;
 use Modules\Deputy\Services\GetPartyOptionsService;
 use Modules\Deputy\Services\ListDeputiesService;
 use Modules\Deputy\Services\RankingDeputiesService;
 use Modules\Expense\Jobs\EnsureDeputyRecentExpensesJob;
+use Modules\Expense\Models\Expense;
 use Modules\Expense\Services\ListExpensesByDeputyService;
 use Modules\Shared\Enums\StateEnum;
 
@@ -29,13 +29,18 @@ final class DeputyController extends Controller
         Request $request,
         ListDeputiesService $listDeputiesService
     ): View {
-        $filters = $request->only(['name', 'state', 'party']);
+        $filters = $request->only(['name', 'state', 'party', 'order_by', 'year']);
 
         return view('deputies.index', [
             'deputies' => $listDeputiesService->execute($filters),
             'filters' => $filters,
             'states' => StateEnum::cases(),
             'parties' => $this->getPartyOptions->execute(),
+            'years' => Expense::query()
+                ->selectRaw('year')
+                ->distinct()
+                ->orderByDesc('year')
+                ->pluck('year')
         ]);
     }
 

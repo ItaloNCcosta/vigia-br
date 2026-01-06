@@ -41,7 +41,7 @@
         </div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
             <form method="GET" action="{{ route('deputies.index') }}"
-                class="grid grid-cols-1 md:grid-cols-6 gap-4 md:gap-6">
+                class="grid grid-cols-1 md:grid-cols-8 gap-4 md:gap-6">
 
                 @if ($filters['name'] ?? null)
                     <input type="hidden" name="name" value="{{ $filters['name'] }}">
@@ -72,6 +72,45 @@
                         @foreach ($parties as $party)
                             <option value="{{ $party->value }}" @selected(($filters['party'] ?? '') === $party->value)>
                                 {{ $party->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">
+                        Ordem
+                    </label>
+
+                    <select name="order_by"
+                        class="w-full rounded-lg border-slate-300 text-sm focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="name" @selected(request('order_by') === 'name')>
+                            Nome (A–Z)
+                        </option>
+
+                        <option value="expenses_asc" @selected(request('order_by') === 'expenses_asc')>
+                            Gastos (menor → maior)
+                        </option>
+
+                        <option value="expenses_desc" @selected(request('order_by') === 'expenses_desc')>
+                            Gastos (maior → menor)
+                        </option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">
+                        Ano
+                    </label>
+
+                    <select name="year"
+                        class="w-full rounded-lg border-slate-300 text-sm focus:ring-emerald-500 focus:border-emerald-500">
+
+                        <option value="">Todos</option>
+
+                        @foreach ($years as $year)
+                            <option value="{{ $year }}" @selected(request('year') == $year)>
+                                {{ $year }}
                             </option>
                         @endforeach
                     </select>

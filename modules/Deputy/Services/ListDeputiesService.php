@@ -12,7 +12,9 @@ final class ListDeputiesService
     public function execute(array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
         $year = $filters['year'] ?? now()->year;
-        return Deputy::query()
+        $orderBy = $filters['order_by'] ?? 'name';
+
+        $query = Deputy::query()
             ->select([
                 'id',
                 'name',
@@ -30,8 +32,18 @@ final class ListDeputiesService
             )
             ->when($filters['name'] ?? null, fn($q, $v) => $q->byName($v))
             ->when($filters['state'] ?? null, fn($q, $v) => $q->byState($v))
-            ->when($filters['party'] ?? null, fn($q, $v) => $q->byParty($v))
-            ->orderBy('name')
+            ->when($filters['party'] ?? null, fn($q, $v) => $q->byParty($v));
+
+        $query->when(
+            $orderBy,
+            fn($q) => match ($orderBy) {
+                'expenses_asc'  => $q->orderBy('total_expenses', 'asc'),
+                'expenses_desc' => $q->orderBy('total_expenses', 'desc'),
+                default         => $q->orderBy('name'),
+            }
+        );
+
+        return $query
             ->paginate($perPage)
             ->appends($filters);
     }
